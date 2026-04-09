@@ -1,0 +1,42 @@
+.header-section {
+  height: 35vh;
+  background: #3b82f6;
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  h2 { color: white; font-size: 32px; font-weight: 800; margin: 0; }
+  p { color: rgba(255,255,255,0.7); margin: 5px 0 0 0; }
+}
+
+.login-form {
+  background: white;
+  margin-top: -50px;
+  border-radius: 50px 50px 0 0;
+  padding: 50px 30px;
+  height: 65vh;
+
+  .input-group {
+    margin-bottom: 20px;
+    ion-label { font-size: 11px; font-weight: 800; color: #94a3b8; margin-left: 15px; }
+    ion-item {
+      --background: #f8fafc;
+      --border-radius: 15px;
+      margin-top: 8px;
+      --inner-padding-end: 15px;
+      ion-icon { color: #3b82f6; margin-right: 10px; }
+    }
+  }
+
+  .login-btn {
+    --border-radius: 15px;
+    height: 60px;
+    font-weight: bold;
+    margin-top: 40px;
+    --box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+  }
+
+  .forgot-pwd {
+    text-align: center; margin-top: 30px; font-size: 13px; color: #64748b;
+    span { color: #3b82f6; font-weight: bold; }
+  }
+}

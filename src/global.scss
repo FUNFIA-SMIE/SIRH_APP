@@ -35,3 +35,13 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+// Rendre les coins des boutons et des cartes plus ronds partout
+:root {
+  --ion-border-radius: 16px;
+}
+
+// Supprimer la ligne de séparation sous la toolbar
+ion-toolbar {
+  --border-style: none;
+}

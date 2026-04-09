@@ -1,2 +1,22 @@
 // For information on how to create your own theme, please refer to:
 // https://ionicframework.com/docs/theming/
+:root {
+  --ion-color-primary: #3b82f6; // Bleu Funfia
+  --ion-color-primary-rgb: 59, 130, 246;
+  --ion-color-primary-contrast: #ffffff;
+  
+  --ion-background-color: #f8fafc; // Gris très clair pour le fond
+  
+  // Style pour les cartes
+  --ion-card-background: #ffffff;
+  --ion-border-radius: 20px;
+}
+
+// Mode sombre pour le SIRH
+@media (prefers-color-scheme: dark) {
+  body {
+    --ion-background-color: #0f172a;
+    --ion-color-step-50: #1e293b;
+    --ion-item-background: #1e293b;
+  }
+}

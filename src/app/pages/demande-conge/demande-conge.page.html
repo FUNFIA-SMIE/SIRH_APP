@@ -1,0 +1,42 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Nouvelle Demande</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="form-card">
+    <ion-list lines="full">
+      <ion-item>
+        <ion-label position="stacked">Type de congé</ion-label>
+        <ion-select placeholder="Sélectionner">
+          <ion-select-option value="cp">Congé Payé</ion-select-option>
+          <ion-select-option value="rtt">RTT</ion-select-option>
+          <ion-select-option value="maladie">Maladie</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Date de début</ion-label>
+        <ion-input type="date"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Date de fin</ion-label>
+        <ion-input type="date"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Commentaire (Optionnel)</ion-label>
+        <ion-textarea placeholder="Précisez ici..."></ion-textarea>
+      </ion-item>
+    </ion-list>
+
+    <ion-button expand="block" shape="round" class="submit-btn">
+      SOUMETTRE LA DEMANDE
+    </ion-button>
+  </div>
+</ion-content>

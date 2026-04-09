@@ -1,0 +1,56 @@
+ion-content {
+  --background: #f8fafc;
+}
+
+.form-card {
+  background: white;
+  border-radius: 28px;
+  padding: 10px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+  margin-top: 10px;
+
+  ion-list {
+    background: transparent;
+  }
+
+  ion-item {
+    --padding-start: 10px;
+    --inner-padding-end: 10px;
+    --border-color: #f1f5f9;
+    margin-bottom: 10px;
+
+    ion-label {
+      font-size: 12px !important;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 1px;
+      margin-bottom: 12px !important;
+    }
+
+    ion-input, ion-select, ion-textarea {
+      font-weight: 600;
+      color: #1e293b;
+      --placeholder-color: #cbd5e1;
+    }
+  }
+}
+
+// Bouton de soumission personnalisé
+.submit-btn {
+  margin-top: 35px;
+  height: 60px;
+  --background: #3b82f6;
+  --background-activated: #2563eb;
+  --border-radius: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  --box-shadow: 0 12px 25px rgba(59, 130, 246, 0.3);
+}
+
+// Style spécifique pour les dates
+ion-input[type="date"] {
+  &::before {
+    color: #94a3b8;
+    font-size: 14px;
+  }
+}

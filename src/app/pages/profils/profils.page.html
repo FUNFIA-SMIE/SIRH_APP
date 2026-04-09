@@ -1,0 +1,102 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Mon Profil</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="saveEmploye()" [disabled]="isLoading">
+        <ion-icon name="checkmark-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding bg-light">
+  <div class="profile-header">
+    <div class="avatar-container" (click)="fileInput.click()">
+      <img *ngIf="photoPreview" [src]="photoPreview" alt="Avatar" />
+      <div *ngIf="!photoPreview" class="avatar-placeholder">
+        <ion-icon name="person-outline"></ion-icon>
+      </div>
+      <div class="edit-badge">
+        <ion-icon name="camera-outline"></ion-icon>
+      </div>
+      <input #fileInput type="file" (change)="onPhotoSelected($event)" accept="image/*" class="hidden" />
+    </div>
+    <h2>{{ employe.prenom }} {{ employe.nom }}</h2>
+    <p class="badge-matricule">{{ employe.matricule }}</p>
+  </div>
+
+  <div class="form-container">
+    
+    <ion-list-header>
+      <ion-label>INFORMATIONS PERSONNELLES</ion-label>
+    </ion-list-header>
+
+    <ion-card>
+      <ion-item lines="full">
+        <ion-label position="stacked">Nom d'usage</ion-label>
+        <ion-input [(ngModel)]="employe.nom_usage" placeholder="Nom marital ou autre"></ion-input>
+      </ion-item>
+
+      <ion-item lines="full">
+        <ion-label position="stacked">Email Personnel</ion-label>
+        <ion-input type="email" [(ngModel)]="employe.email_perso" placeholder="email@exemple.com"></ion-input>
+      </ion-item>
+
+      <ion-item lines="full">
+        <ion-label position="stacked">Téléphone Personnel</ion-label>
+        <ion-input type="tel" [(ngModel)]="employe.telephone_perso" placeholder="03X XX XXX XX"></ion-input>
+      </ion-item>
+    </ion-card>
+
+    <ion-list-header>
+      <ion-label>ADRESSE DE RÉSIDENCE</ion-label>
+    </ion-list-header>
+
+    <ion-card>
+      <ion-item lines="full">
+        <ion-label position="stacked">Adresse</ion-label>
+        <ion-textarea [(ngModel)]="employe.adresse" rows="2" placeholder="N° de rue, Quartier..."></ion-textarea>
+      </ion-item>
+
+      <ion-item lines="full">
+        <ion-label position="stacked">Ville</ion-label>
+        <ion-input [(ngModel)]="employe.ville"></ion-input>
+      </ion-item>
+
+      <ion-item lines="full">
+        <ion-label position="stacked">Code Postal</ion-label>
+        <ion-input [(ngModel)]="employe.code_postal"></ion-input>
+      </ion-item>
+    </ion-card>
+
+    <ion-list-header>
+      <ion-label>INFOS PROFESSIONNELLES (Lecture seule)</ion-label>
+    </ion-list-header>
+    <ion-card class="readonly-card">
+      <ion-item lines="none">
+        <ion-icon name="briefcase-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>
+          <h3>Poste occupé</h3>
+          <p>{{ employe.poste_id }}</p>
+        </ion-label>
+      </ion-item>
+      <ion-item lines="none">
+        <ion-icon name="mail-outline" slot="start" color="medium"></ion-icon>
+        <ion-label>
+          <h3>Email Professionnel</h3>
+          <p>{{ employe.email_pro }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-card>
+  </div>
+
+  <div class="ion-padding">
+    <ion-button expand="block" shape="round" class="save-btn" (click)="saveEmploye()" [disabled]="isLoading">
+      <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+      <span *ngIf="!isLoading">Mettre à jour mon profil</span>
+    </ion-button>
+  </div>
+</ion-content>

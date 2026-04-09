@@ -1,0 +1,133 @@
+// --- FOND DE PAGE ---
+ion-content {
+  --background: #f8fafc;
+}
+
+// --- HEADER : CLOCHE ET POINT ROUGE ---
+ion-button {
+  position: relative;
+  
+  .notif-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 9px;
+    height: 9px;
+    background: #ef4444; // Rouge vif
+    border-radius: 50%;
+    border: 2px solid var(--ion-color-primary);
+    z-index: 10;
+  }
+}
+
+// --- CARTES DE BIENVENUE ---
+.welcome-card {
+  margin-bottom: 25px;
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    ion-avatar {
+      width: 60px;
+      height: 60px;
+      border: 2px solid var(--ion-color-primary);
+      padding: 2px;
+    }
+
+    .text {
+      h3 { font-size: 14px; color: #64748b; margin: 0; }
+      h1 { font-size: 20px; font-weight: 800; color: #1e293b; margin: 2px 0 0 0; }
+    }
+  }
+}
+
+// --- CONTAINER DU SOLDE ---
+.balance-container {
+  .balance-box {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 30px 25px;
+    border-radius: 28px;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.2);
+    color: white;
+
+    p { 
+      font-size: 11px; 
+      font-weight: 800; 
+      letter-spacing: 2px; 
+      color: var(--ion-color-primary); 
+      margin: 0;
+    }
+
+    h2 { 
+      font-size: 42px; 
+      font-weight: 900; 
+      margin: 10px 0 0 0;
+      small { font-size: 16px; color: #475569; font-weight: 500; }
+    }
+  }
+}
+
+// --- GRILLE D'ACTIONS ---
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 30px 0 15px 5px;
+}
+
+.menu-item {
+  background: white;
+  height: 120px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+  transition: all 0.2s ease-in-out;
+
+  &:active { transform: scale(0.95); background: #f1f5f9; }
+
+  ion-icon { font-size: 32px; margin-bottom: 12px; }
+  span { font-size: 13px; font-weight: 700; color: #334155; }
+
+  &.green ion-icon { color: #10b981; }
+  &.blue ion-icon { color: #3b82f6; }
+  &.orange ion-icon { color: #f59e0b; }
+  &.red ion-icon { color: #ef4444; }
+}
+
+// --- STYLE DU POPOVER (IMPORTANT) ---
+ion-popover {
+  --width: 280px;
+  --border-radius: 20px;
+  --box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+
+  ion-list {
+    padding: 0;
+    background: white;
+  }
+
+  ion-item {
+    --padding-start: 15px;
+    --inner-padding-end: 15px;
+    --min-height: 70px;
+
+    h3 { 
+      font-size: 14px; 
+      font-weight: 700; 
+      color: #1e293b; 
+      margin: 0 0 4px 0; 
+    }
+    p { 
+      font-size: 12px; 
+      color: #64748b; 
+      margin: 0; 
+    }
+    
+    ion-icon {
+      font-size: 22px;
+    }
+  }
+}
