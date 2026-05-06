@@ -1,42 +1,267 @@
-.header-section {
-  height: 35vh;
-  background: #3b82f6;
-  display: flex;
-  align-items: center;
-  padding: 0 40px;
-  h2 { color: white; font-size: 32px; font-weight: 800; margin: 0; }
-  p { color: rgba(255,255,255,0.7); margin: 5px 0 0 0; }
+ion-content {
+  --background: #1e3a5f;
 }
 
-.login-form {
-  background: white;
-  margin-top: -50px;
-  border-radius: 50px 50px 0 0;
-  padding: 50px 30px;
-  height: 65vh;
+// ─── HEADER SECTION ──────────────────────────────────────────
+.header-section {
+  background: #1e3a5f;
+  padding: 50px 28px 65px;
+  position: relative;
+  overflow: hidden;
 
-  .input-group {
-    margin-bottom: 20px;
-    ion-label { font-size: 11px; font-weight: 800; color: #94a3b8; margin-left: 15px; }
-    ion-item {
-      --background: #f8fafc;
-      --border-radius: 15px;
-      margin-top: 8px;
-      --inner-padding-end: 15px;
-      ion-icon { color: #3b82f6; margin-right: 10px; }
+  &::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.15);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    right: 30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.1);
+  }
+
+  // ─── LOGO ─────────────────────────────────────────────────
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+
+    .logo-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      ion-icon {
+        font-size: 26px;
+        color: white;
+      }
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+
+      .logo-name {
+        font-size: 22px;
+        font-weight: 800;
+        color: white;
+        letter-spacing: 1.5px;
+        line-height: 1;
+      }
+
+      .logo-sub {
+        font-size: 10px;
+        color: #7aa3c8;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-top: 4px;
+      }
     }
   }
 
-  .login-btn {
-    --border-radius: 15px;
-    height: 60px;
-    font-weight: bold;
-    margin-top: 40px;
-    --box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+  // ─── TITRE ────────────────────────────────────────────────
+  .welcome-text {
+    position: relative;
+    z-index: 1;
+
+    h2 {
+      color: white;
+      font-size: 30px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+    }
+
+    p {
+      color: #7aa3c8;
+      font-size: 13px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      ion-icon {
+        font-size: 14px;
+        color: #10b981;
+      }
+    }
+  }
+}
+
+// ─── FORMULAIRE ──────────────────────────────────────────────
+.login-form {
+  background: white;
+  margin-top: -28px;
+  border-radius: 28px 28px 0 0;
+  padding: 36px 24px 30px;
+  min-height: 65vh;
+  position: relative;
+  z-index: 2;
+
+  .input-group {
+    margin-bottom: 18px;
+
+    ion-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 1.2px;
+      margin-left: 4px;
+    }
+
+    ion-item {
+      --background: #f8fafc;
+      --border-radius: 14px;
+      --border-width: 0;
+      --inner-padding-end: 14px;
+      --padding-start: 14px;
+      margin-top: 8px;
+      border: 1.5px solid #f1f5f9;
+      border-radius: 14px;
+      transition: border-color 0.2s;
+
+      &.item-has-focus {
+        border-color: #3b82f6;
+        --background: white;
+      }
+
+      &.input-error {
+        border-color: #ef4444;
+        --background: #fef2f2;
+      }
+
+      ion-icon[slot="start"] {
+        color: #3b82f6;
+        font-size: 18px;
+        margin-right: 8px;
+      }
+    }
+
+    .input-hint {
+      font-size: 11px;
+      color: #94a3b8;
+      margin: 6px 0 0 4px;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      &::before {
+        content: 'ⓘ';
+        color: #f59e0b;
+        font-size: 12px;
+      }
+    }
   }
 
-  .forgot-pwd {
-    text-align: center; margin-top: 30px; font-size: 13px; color: #64748b;
-    span { color: #3b82f6; font-weight: bold; }
+  // ─── ERREUR ─────────────────────────────────────────────
+  .error-message {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    span {
+      font-size: 12px;
+      color: #b91c1c;
+      font-weight: 600;
+    }
   }
+
+  // ─── BOUTON ─────────────────────────────────────────────
+  .login-btn {
+    --background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    --background-activated: #1d4ed8;
+    --border-radius: 14px;
+    --box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+    height: 54px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-top: 28px;
+  }
+
+  // ─── DIVIDER ────────────────────────────────────────────
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0;
+
+    hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    span {
+      font-size: 10px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  // ─── MOT DE PASSE OUBLIÉ ────────────────────────────────
+  .forgot-pwd {
+    text-align: center;
+    font-size: 12px;
+    color: #94a3b8;
+
+    span {
+      color: #3b82f6;
+      font-weight: 700;
+    }
+  }
+
+  // ─── SÉCURITÉ ───────────────────────────────────────────
+  .security-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+
+    ion-icon {
+      font-size: 13px;
+      color: #10b981;
+    }
+
+    span {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+  }
+}
+
+// ─── ICÔNE ŒIL ──────────────────────────────────────────────
+.toggle-pwd-icon {
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 18px;
+  transition: color 0.2s;
+
+  &:hover { color: #3b82f6; }
 }

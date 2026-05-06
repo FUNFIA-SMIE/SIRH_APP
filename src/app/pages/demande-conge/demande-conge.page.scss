@@ -1,56 +1,103 @@
-ion-content {
-  --background: #f8fafc;
-}
+.bg-page { --background: #f8faff; }
 
-.form-card {
-  background: white;
-  border-radius: 28px;
-  padding: 10px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-  margin-top: 10px;
+// En-tête Profil Employé
+.profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 5px 25px;
 
-  ion-list {
-    background: transparent;
+  ion-avatar {
+    width: 60px;
+    height: 60px;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
 
-  ion-item {
-    --padding-start: 10px;
-    --inner-padding-end: 10px;
-    --border-color: #f1f5f9;
+  .user-info {
+    h2 { margin: 0; font-size: 1.2rem; font-weight: 800; color: #1a1a1a; }
+    p { margin: 2px 0 0; font-size: 0.85rem; color: #666; 
+      span { font-weight: bold; color: var(--ion-color-primary); }
+    }
+  }
+}
+
+.glass-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 15px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+
+  .section-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
     margin-bottom: 10px;
-
-    ion-label {
-      font-size: 12px !important;
-      font-weight: 800;
-      color: #94a3b8;
-      letter-spacing: 1px;
-      margin-bottom: 12px !important;
-    }
-
-    ion-input, ion-select, ion-textarea {
-      font-weight: 600;
-      color: #1e293b;
-      --placeholder-color: #cbd5e1;
-    }
   }
 }
 
-// Bouton de soumission personnalisé
-.submit-btn {
-  margin-top: 35px;
-  height: 60px;
-  --background: #3b82f6;
-  --background-activated: #2563eb;
-  --border-radius: 18px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  --box-shadow: 0 12px 25px rgba(59, 130, 246, 0.3);
+.solde-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff4e5;
+  padding: 10px;
+  border-radius: 12px;
+  margin-top: 10px;
+  color: #856404;
+  font-size: 0.85rem;
+  ion-icon { font-size: 1.2rem; }
 }
 
-// Style spécifique pour les dates
-ion-input[type="date"] {
-  &::before {
-    color: #94a3b8;
-    font-size: 14px;
+.date-col {
+  text-align: center;
+  padding: 5px;
+  .small-label { font-size: 0.65rem; font-weight: bold; color: #ccc; }
+  ion-datetime-button { margin: 8px auto; }
+  ion-checkbox { font-size: 0.8rem; --size: 18px; margin-top: 5px; }
+}
+
+.border-right { border-right: 1px solid #f0f4f8; }
+
+.upload-container {
+  border: 2px dashed #cbd5e0;
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  color: #718096;
+  margin-bottom: 20px;
+  &.success {
+    background: #f0fff4;
+    border-color: #48bb78;
+    color: #2f855a;
+  }
+  ion-icon { font-size: 2.5rem; }
+}
+
+.form-footer {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+
+  .total-badge {
+    background: #fff;
+    padding: 10px;
+    border-radius: 15px;
+    text-align: center;
+    min-width: 80px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    .days { display: block; font-size: 1.4rem; font-weight: 900; color: var(--ion-color-primary); }
+    .text { font-size: 0.6rem; text-transform: uppercase; color: #999; }
+  }
+
+  .submit-btn {
+    flex: 1;
+    height: 60px;
+    font-weight: bold;
+    font-size: 1rem;
+    --box-shadow: 0 8px 20px rgba(var(--ion-color-primary-rgb), 0.3);
   }
 }

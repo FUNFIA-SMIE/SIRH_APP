@@ -1,133 +1,353 @@
-// --- FOND DE PAGE ---
+// --- VARIABLES & FOND ---
 ion-content {
-  --background: #f8fafc;
+  --background: #f0f4f8; // Fond gris clair légèrement bleuté
 }
 
-// --- HEADER : CLOCHE ET POINT ROUGE ---
-ion-button {
-  position: relative;
-  
-  .notif-dot {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 9px;
-    height: 9px;
-    background: #ef4444; // Rouge vif
-    border-radius: 50%;
-    border: 2px solid var(--ion-color-primary);
-    z-index: 10;
+// --- HEADER & TOOLBAR ---
+ion-header {
+  &.ion-no-border::after {
+    display: none; // Supprime la ligne sous le header
   }
 }
 
-// --- CARTES DE BIENVENUE ---
-.welcome-card {
-  margin-bottom: 25px;
+ion-toolbar {
+  --background: linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%);
+  --border-width: 0;
+  --padding-top: env(safe-area-inset-top); // Support pour les encoches (notch)
+
+  .header-inner {
+    padding: 16px 20px 28px 20px; // ← était 35px, maintenant 28px
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+  }
+
+  .header-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #7aa3c8;
+    text-transform: uppercase;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+
+    ion-button {
+      --color: #ffffff;
+      --background: rgba(255, 255, 255, 0.1);
+      --border-radius: 12px;
+      margin: 0;
+      width: 40px;
+      height: 40px;
+
+      .notif-dot {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 8px;
+        height: 8px;
+        background: #ff4d4d;
+        border-radius: 50%;
+        border: 2px solid #1e3a5f;
+      }
+
+      &.logout-btn {
+        --color: #ff8a8a;
+      }
+    }
+  }
+
   .user-info {
     display: flex;
     align-items: center;
     gap: 15px;
 
-    ion-avatar {
-      width: 60px;
-      height: 60px;
-      border: 2px solid var(--ion-color-primary);
-      padding: 2px;
+    .avatar-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px; // Style "Squircle" moderne
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; // Recadre l'image au centre sans la déformer
+        display: block;
+      }
     }
 
     .text {
-      h3 { font-size: 14px; color: #64748b; margin: 0; }
-      h1 { font-size: 20px; font-weight: 800; color: #1e293b; margin: 2px 0 0 0; }
+      h3 {
+        font-size: 13px;
+        color: #94a3b8;
+        font-weight: 400;
+        margin: 0 0 2px 0;
+      }
+
+      h1 {
+        font-size: 20px;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+      }
     }
   }
 }
 
-// --- CONTAINER DU SOLDE ---
-.balance-container {
-  .balance-box {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    padding: 30px 25px;
-    border-radius: 28px;
-    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.2);
-    color: white;
+// --- CONTENEUR PRINCIPAL ---
+.content-inner {
+  padding: 14px 14px 20px 14px; // ← padding normal, PAS margin-top négatif
+}
 
-    p { 
-      font-size: 11px; 
-      font-weight: 800; 
-      letter-spacing: 2px; 
-      color: var(--ion-color-primary); 
-      margin: 0;
-    }
+// --- CARTE SOLDE (L'élément qui chevauche) ---
+.balance-card {
+  background: white;
+  border-radius: 24px;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px; // ← plus de margin-top négatif
+  border: 0.5px solid #e2e8f0;
 
-    h2 { 
-      font-size: 42px; 
-      font-weight: 900; 
-      margin: 10px 0 0 0;
-      small { font-size: 16px; color: #475569; font-weight: 500; }
+  .balance-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #64748b;
+    text-transform: uppercase;
+    margin: 0 0 8px 0;
+  }
+
+  .balance-value {
+    font-size: 36px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+
+    small {
+      font-size: 16px;
+      color: #94a3b8;
+      font-weight: 500;
+      margin-left: 4px;
     }
   }
+
+  .balance-icon {
+    width: 56px;
+    height: 56px;
+    background: #f0f7ff;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    ion-icon {
+      font-size: 28px;
+      color: #3b82f6;
+    }
+  }
+}
+
+// --- TITRES DE SECTIONS ---
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0 0 15px 4px;
 }
 
 // --- GRILLE D'ACTIONS ---
-.section-title {
-  font-size: 18px;
-  font-weight: 800;
-  color: #1e293b;
-  margin: 30px 0 15px 5px;
+ion-row {
+  margin: 0 -8px; // Compense le padding des colonnes
+}
+
+ion-col {
+  padding: 8px;
 }
 
 .menu-item {
   background: white;
-  height: 120px;
-  border-radius: 24px;
+  border-radius: 20px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.03);
-  transition: all 0.2s ease-in-out;
+  gap: 12px;
+  height: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
 
-  &:active { transform: scale(0.95); background: #f1f5f9; }
-
-  ion-icon { font-size: 32px; margin-bottom: 12px; }
-  span { font-size: 13px; font-weight: 700; color: #334155; }
-
-  &.green ion-icon { color: #10b981; }
-  &.blue ion-icon { color: #3b82f6; }
-  &.orange ion-icon { color: #f59e0b; }
-  &.red ion-icon { color: #ef4444; }
-}
-
-// --- STYLE DU POPOVER (IMPORTANT) ---
-ion-popover {
-  --width: 280px;
-  --border-radius: 20px;
-  --box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-
-  ion-list {
-    padding: 0;
-    background: white;
+  &:active {
+    transform: scale(0.95);
+    background: #f8fafc;
   }
 
-  ion-item {
-    --padding-start: 15px;
-    --inner-padding-end: 15px;
-    --min-height: 70px;
+  .action-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    h3 { 
-      font-size: 14px; 
-      font-weight: 700; 
-      color: #1e293b; 
-      margin: 0 0 4px 0; 
-    }
-    p { 
-      font-size: 12px; 
-      color: #64748b; 
-      margin: 0; 
-    }
-    
     ion-icon {
       font-size: 22px;
     }
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.2;
+  }
+
+  .green-icon {
+    background: #ecfdf5;
+
+    ion-icon {
+      color: #10b981;
+    }
+  }
+
+  .blue-icon {
+    background: #eff6ff;
+
+    ion-icon {
+      color: #3b82f6;
+    }
+  }
+
+  .amber-icon {
+    background: #fffbeb;
+
+    ion-icon {
+      color: #f59e0b;
+    }
+  }
+
+  .rose-icon {
+    background: #fff1f2;
+
+    ion-icon {
+      color: #f43f5e;
+    }
+  }
+}
+
+// --- LISTE D'ACTIVITÉ ---
+.notif-list {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+
+  .notif-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .notif-dot-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+
+      &.success {
+        background: #ecfdf5;
+
+        ion-icon {
+          color: #10b981;
+        }
+      }
+
+      &.warn {
+        background: #fffbeb;
+
+        ion-icon {
+          color: #f59e0b;
+        }
+      }
+    }
+
+    .notif-text {
+      flex: 1;
+
+      h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+      }
+
+      p {
+        font-size: 12px;
+        color: #94a3b8;
+        margin: 2px 0 0 0;
+      }
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-transform: uppercase;
+
+      &.badge-success {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      &.badge-warn {
+        background: #fef3c7;
+        color: #92400e;
+      }
+    }
+  }
+}
+
+// --- BOUTON DECONNEXION ---
+.logout-row {
+  background: #fee2e2;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+
+  ion-icon {
+    font-size: 20px;
+    color: #b91c1c;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #b91c1c;
   }
 }

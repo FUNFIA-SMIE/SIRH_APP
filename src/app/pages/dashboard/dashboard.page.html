@@ -1,66 +1,119 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar color="primary">
-    <ion-title>Tableau de Bord</ion-title>
-    <ion-buttons slot="end">
-      <ion-button id="open-notif">
-        <ion-icon name="notifications-outline"></ion-icon>
-        <div class="notif-dot"></div>
-      </ion-button>
-    </ion-buttons>
+  <ion-toolbar>
+    <div class="header-inner">
+      <div class="header-top">
+        <span class="header-title">Tableau de bord</span>
+        <div class="header-actions">
+          <ion-button fill="clear" id="open-notif">
+            <ion-icon name="notifications-outline"></ion-icon>
+            <div class="notif-dot"></div>
+          </ion-button>
+          <ion-button fill="clear" class="logout-btn" (click)="logout()">
+            <ion-icon name="log-out-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+      <div class="user-info">
+        <div class="avatar-circle">
+          <!-- Si le token contient une image, on l'affiche -->
+          <img *ngIf="token?.photo_url" [src]="token.photo_url" alt="Avatar">
+
+          <!-- Sinon on affiche les initiales -->
+        </div>
+        <div class="text">
+          <h3>Bonjour,</h3>
+          <h1>{{ token?.prenom }} {{ token?.nom }}</h1>
+        </div>
+      </div>
+    </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  
-  <div class="welcome-card">
-    <div class="user-info">
-      <ion-avatar>
-        <img src="https://ui-avatars.com/api/?name=Funfia&background=3b82f6&color=fff" />
-      </ion-avatar>
-      <div class="text">
-        <h3>Bonjour,</h3>
-        <h1>Collaborateur FUNFIA</h1>
+<ion-content>
+  <div class="content-inner">
+
+    <!-- Solde -->
+    <div class="balance-card">
+      <div>
+        <p class="balance-label">Solde congés payés</p>
+        <h2 class="balance-value">24.5 <small>jours</small></h2>
+      </div>
+      <div class="balance-icon">
+        <ion-icon name="calendar-number-outline"></ion-icon>
       </div>
     </div>
-  </div>
 
-  <div class="balance-container">
-    <div class="balance-box">
-      <p>SOLDE CONGÉS PAYÉS</p>
-      <h2>24.5 <small>jours</small></h2>
+    <!-- Actions -->
+    <p class="section-title">Actions rapides</p>
+    <ion-grid class="ion-no-padding">
+      <ion-row>
+        <ion-col size="6">
+          <div class="menu-item" (click)="navDemande()">
+            <div class="action-icon green-icon">
+              <ion-icon name="add-circle-outline"></ion-icon>
+            </div>
+            <span>Nouvelle demande</span>
+          </div>
+        </ion-col>
+        <ion-col size="6">
+          <div class="menu-item">
+            <div class="action-icon blue-icon">
+              <ion-icon name="calendar-outline"></ion-icon>
+            </div>
+            <span>Mes absences</span>
+          </div>
+        </ion-col>
+        <ion-col size="6">
+          <div class="menu-item">
+            <div class="action-icon amber-icon">
+              <ion-icon name="document-text-outline"></ion-icon>
+            </div>
+            <span>Mes bulletins</span>
+          </div>
+        </ion-col>
+        <ion-col size="6">
+          <div class="menu-item" (click)="navProfil()">
+            <div class="action-icon rose-icon">
+              <ion-icon name="person-outline"></ion-icon>
+            </div>
+            <span>Profil</span>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
+    <!-- Activité récente -->
+    <p class="section-title">Activité récente</p>
+    <div class="notif-list">
+      <div class="notif-item">
+        <div class="notif-dot-icon success">
+          <ion-icon name="checkmark-circle"></ion-icon>
+        </div>
+        <div class="notif-text">
+          <h4>Congé annuel</h4>
+          <p>Demande acceptée</p>
+        </div>
+        <span class="badge badge-success">Approuvé</span>
+      </div>
+      <div class="notif-item">
+        <div class="notif-dot-icon warn">
+          <ion-icon name="time"></ion-icon>
+        </div>
+        <div class="notif-text">
+          <h4>Demande RTT</h4>
+          <p>En attente RH</p>
+        </div>
+        <span class="badge badge-warn">En cours</span>
+      </div>
     </div>
-  </div>
 
-  <h2 class="section-title">Actions Rapides</h2>
-  
-  <ion-grid>
-    <ion-row>
-      <ion-col size="6">
-        <div class="menu-item green" (click)="navDemande()">
-          <ion-icon name="add-circle-outline"></ion-icon>
-          <span>Nouvelle Demande</span>
-        </div>
-      </ion-col>
-      <ion-col size="6">
-        <div class="menu-item blue">
-          <ion-icon name="calendar-outline"></ion-icon>
-          <span>Mes Absences</span>
-        </div>
-      </ion-col>
-      <ion-col size="6">
-        <div class="menu-item orange">
-          <ion-icon name="document-text-outline"></ion-icon>
-          <span>Mes Bulletins</span>
-        </div>
-      </ion-col>
-      <ion-col size="6">
-        <div class="menu-item red" (click)="navProfil()">
-          <ion-icon name="settings-outline"></ion-icon>
-          <span>Profil</span>
-        </div>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+    <!-- Logout bas de page -->
+    <div class="logout-row" (click)="logout()">
+      <ion-icon name="log-out-outline" color="danger"></ion-icon>
+      <span>Se déconnecter</span>
+    </div>
+
+  </div>
 
   <ion-popover trigger="open-notif" triggerAction="click" [dismissOnSelect]="true">
     <ng-template>
@@ -68,7 +121,7 @@
         <ion-item>
           <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
           <ion-label>
-            <h3>Congé Annuel</h3>
+            <h3>Congé annuel</h3>
             <p>Demande acceptée</p>
           </ion-label>
         </ion-item>
@@ -82,5 +135,4 @@
       </ion-list>
     </ng-template>
   </ion-popover>
-
 </ion-content>

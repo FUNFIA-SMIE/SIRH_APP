@@ -1,36 +1,79 @@
 <ion-content>
   <div class="header-section">
+
+    <!-- Logo FUNFIA -->
+    <div class="logo-wrap">
+      <div class="logo-box">
+        <ion-icon name="business-outline"></ion-icon>
+      </div>
+      <div class="logo-text">
+        <span class="logo-name">FUNFIA</span>
+        <span class="logo-sub">Système RH</span>
+      </div>
+    </div>
+
     <div class="welcome-text">
       <h2>Connexion</h2>
-      <p>Accès sécurisé SIRH</p>
+      <p>
+        <ion-icon name="shield-checkmark-outline"></ion-icon>
+        Accès sécurisé SIRH
+      </p>
     </div>
   </div>
 
   <div class="login-form">
     <ion-list lines="none">
+
       <div class="input-group">
-        <ion-label>MATRICULE</ion-label>
-        <ion-item>
+        <ion-label>IDENTIFIANT</ion-label>
+        <ion-item [class.input-error]="errorMessage && !identifiant">
           <ion-icon name="person-outline" slot="start"></ion-icon>
-          <ion-input type="text" placeholder="Ex: FUN-001"></ion-input>
+          <ion-input type="text" placeholder="jean.rakoto@funfia.mg"
+            [(ngModel)]="identifiant" name="identifiant"
+            autocomplete="username" [disabled]="isLoading">
+          </ion-input>
         </ion-item>
       </div>
 
       <div class="input-group">
         <ion-label>MOT DE PASSE</ion-label>
-        <ion-item>
+        <ion-item [class.input-error]="errorMessage && !mot_de_passe">
           <ion-icon name="lock-closed-outline" slot="start"></ion-icon>
-          <ion-input type="password" placeholder="••••••••"></ion-input>
+          <ion-input [type]="showPassword ? 'text' : 'password'"
+            placeholder="••••••••" [(ngModel)]="mot_de_passe"
+            name="mot_de_passe" autocomplete="current-password"
+            [disabled]="isLoading" (keyup.enter)="onLogin()">
+          </ion-input>
+          <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"
+            slot="end" (click)="togglePassword()" class="toggle-pwd-icon">
+          </ion-icon>
         </ion-item>
+        <p class="input-hint">Le code provisoire reçu est en MAJUSCULES</p>
       </div>
+
     </ion-list>
 
-    <ion-button expand="block" (click)="onLogin()" class="login-btn">
-      SE CONNECTER
+    <div *ngIf="errorMessage" class="error-message">
+      <span>⚠ {{ errorMessage }}</span>
+    </div>
+
+    <ion-button expand="block" (click)="onLogin()"
+      [disabled]="isLoading" class="login-btn">
+      <ion-spinner *ngIf="isLoading" name="crescent" slot="start"></ion-spinner>
+      {{ isLoading ? 'Connexion...' : 'SE CONNECTER' }}
     </ion-button>
-    
+
+    <div class="divider">
+      <hr/><span>accès restreint aux employés</span><hr/>
+    </div>
+
     <div class="forgot-pwd">
-      <p>Problème d'accès ? <span>Contactez la RH</span></p>
+      Problème d'accès ? <span>Contactez la RH</span>
+    </div>
+
+    <div class="security-row">
+      <ion-icon name="lock-closed-outline"></ion-icon>
+      <span>Connexion chiffrée SSL/TLS</span>
     </div>
   </div>
 </ion-content>

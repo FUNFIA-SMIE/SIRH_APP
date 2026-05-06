@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/standalone';
 
 @Component({
@@ -7,6 +7,20 @@ import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/stan
   styleUrls: ['home.page.scss'],
   imports: [IonHeader, IonToolbar, IonTitle, IonContent],
 })
-export class HomePage {
+export class HomePage implements OnInit {
   constructor() {}
+  token = localStorage.getItem('utilisateur');
+
+
+  ngOnInit(): void {
+    if(this.token){
+      console.log('Token trouvé:', this.token);
+    }
+    else{
+      console.log('Aucun token trouvé');
+    }
+  }
+
+
+
 }
