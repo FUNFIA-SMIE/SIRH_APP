@@ -7,8 +7,8 @@ import { Observable } from 'rxjs';
 })
 export class ServiceSirh {
 
-  private url = 'http://localhost:3000';
-
+  //private url = 'http://localhost:3000';
+  private url = 'http://192.168.88.46:3000'
   constructor(private http: HttpClient) { }
 
 
