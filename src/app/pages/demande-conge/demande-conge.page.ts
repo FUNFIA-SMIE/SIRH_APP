@@ -39,6 +39,7 @@ export class DemandeCongePage implements OnInit {
   typesConge: any[] = [];
   justificatifBase64: string | null = null;
   solde_restant: number = 0;
+  token: any;
 
   constructor(
     private alertCtrl: AlertController,
@@ -56,6 +57,7 @@ export class DemandeCongePage implements OnInit {
   ngOnInit() {
     this.loadUserData();
     this.loadTypesConge();
+
 
   }
 
@@ -80,6 +82,14 @@ export class DemandeCongePage implements OnInit {
   loadUserData() {
     // Ici, vous récupérerez les infos de votre service Auth
     // Simulation d'un employé connecté :
+
+    const data = localStorage.getItem('utilisateur');
+    if (data) {
+      this.token = JSON.parse(data);
+    }
+
+    console.log("Utilisateur connecté:", this.token);
+
     this.currentUser = {
       id: 123,
       nom: 'Mbodj',
@@ -161,7 +171,7 @@ export class DemandeCongePage implements OnInit {
     // Préparation de l'objet pour le Backend (format snake_case comme la DB)
     const payload = {
       id: crypto.randomUUID(),
-      employe_id: '4299b4a1-287a-419e-bd91-d8530ceddf29',
+      employe_id: this.token?.employe_id,
       type_conge_id: typeId,
       date_debut: v.date_debut,
       date_fin: v.date_fin,

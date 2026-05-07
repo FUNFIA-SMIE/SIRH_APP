@@ -1,18 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { 
-  IonicModule, 
-  NavController, 
-  ToastController, 
-  ActionSheetController 
+import {
+  IonicModule,
+  NavController,
+  ToastController,
+  ActionSheetController
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { 
-  checkmarkOutline, 
-  cameraOutline, 
-  personOutline, 
-  briefcaseOutline, 
+import {
+  checkmarkOutline,
+  cameraOutline,
+  personOutline,
+  briefcaseOutline,
   mailOutline,
   chevronBackOutline
 } from 'ionicons/icons';
@@ -25,7 +25,7 @@ import {
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class ProfilsPage implements OnInit {
-  
+
   // Modèle de données simplifié pour l'utilisateur
   employe: any = {
     nom: 'Rakoto',
@@ -43,23 +43,34 @@ export class ProfilsPage implements OnInit {
 
   photoPreview: string | null = 'https://ui-avatars.com/api/?name=Jean+Rakoto&background=3b82f6&color=fff';
   isLoading: boolean = false;
+  token: any;
 
   constructor(
     private toastCtrl: ToastController,
     private actionSheetCtrl: ActionSheetController
   ) {
     // Enregistrement des icônes Ionicons
-    addIcons({ 
-      checkmarkOutline, 
-      cameraOutline, 
-      personOutline, 
-      briefcaseOutline, 
+    addIcons({
+      checkmarkOutline,
+      cameraOutline,
+      personOutline,
+      briefcaseOutline,
       mailOutline,
       chevronBackOutline
     });
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+
+    const data = localStorage.getItem('utilisateur');
+    if (data) {
+      this.token = JSON.parse(data);
+      this.photoPreview = this.token.photo_url || this.photoPreview;
+    }
+
+    console.log("Utilisateur connecté:", this.token);
+
+  }
 
   // Gestion de la sélection de photo
   onPhotoSelected(event: any) {
@@ -80,7 +91,7 @@ export class ProfilsPage implements OnInit {
     // Simulation d'un délai réseau
     setTimeout(async () => {
       this.isLoading = false;
-      
+
       const toast = await this.toastCtrl.create({
         message: 'Profil mis à jour avec succès !',
         duration: 2000,

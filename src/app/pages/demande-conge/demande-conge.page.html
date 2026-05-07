@@ -8,13 +8,13 @@
 </ion-header>
 
 <ion-content class="ion-padding bg-page">
-  <div class="profile-summary" *ngIf="currentUser">
+  <div class="profile-summary" *ngIf="token">
     <ion-avatar>
-      <img [src]="currentUser.photo_url" />
+      <img [src]="token.photo_url" />
     </ion-avatar>
     <div class="user-info">
-      <h2>{{ currentUser.prenom }} {{ currentUser.nom }}</h2>
-      <p>{{ currentUser.poste }} • <span>{{ currentUser.matricule }}</span></p>
+      <h2>{{ token.prenom }} {{ token.nom }}</h2>
+      <p>{{ token?.poste }} • <span>{{ token?.matricule }}</span></p>
     </div>
   </div>
 
