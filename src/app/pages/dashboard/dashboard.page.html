@@ -36,7 +36,7 @@
     <div class="balance-card">
       <div>
         <p class="balance-label">Solde congés payés</p>
-        <h2 class="balance-value">24.5 <small>jours</small></h2>
+        <h2 class="balance-value">{{solde_conges[0].soldes[0].solde_restant}} <small>jours</small></h2>
       </div>
       <div class="balance-icon">
         <ion-icon name="calendar-number-outline"></ion-icon>
@@ -85,26 +85,23 @@
     <!-- Activité récente -->
     <p class="section-title">Activité récente</p>
     <div class="notif-list">
-      <div class="notif-item">
-        <div class="notif-dot-icon success">
-          <ion-icon name="checkmark-circle"></ion-icon>
+
+      <div class="notif-item" *ngFor="let hist of historiques">
+        <div class="notif-dot-icon" [ngClass]="getStatutClass(hist.statut)">
+          <ion-icon [name]="getStatutIcon(hist.statut)"></ion-icon>
         </div>
+
         <div class="notif-text">
-          <h4>Congé annuel</h4>
-          <p>Demande acceptée</p>
+          <h4>Congé</h4>
+          <!-- On garde uniquement l'intervalle de dates -->
+          <p>Période : {{ hist.date_debut | date:'dd/MM' }} - {{ hist.date_fin | date:'dd/MM' }} ({{hist.nb_jours}} j )</p>
         </div>
-        <span class="badge badge-success">Approuvé</span>
+
+        <span class="badge" [ngClass]="'badge-' + getStatutClass(hist.statut)">
+          {{ getStatutLabel(hist.statut) }}
+        </span>
       </div>
-      <div class="notif-item">
-        <div class="notif-dot-icon warn">
-          <ion-icon name="time"></ion-icon>
-        </div>
-        <div class="notif-text">
-          <h4>Demande RTT</h4>
-          <p>En attente RH</p>
-        </div>
-        <span class="badge badge-warn">En cours</span>
-      </div>
+
     </div>
 
     <!-- Logout bas de page -->
@@ -118,21 +115,30 @@
   <ion-popover trigger="open-notif" triggerAction="click" [dismissOnSelect]="true">
     <ng-template>
       <ion-list lines="full">
-        <ion-item>
-          <ion-icon name="checkmark-circle" color="success" slot="start"></ion-icon>
+
+        <ion-item *ngFor="let hist of historiques" [button]="true">
+          <!-- Icône dont la couleur change selon le statut SQL -->
+          <ion-icon slot="start" name="time" [color]="getStatutColor(hist.statut)">
+          </ion-icon>
+
           <ion-label>
-            <h3>Congé annuel</h3>
-            <p>Demande acceptée</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <!-- type_conge_id devra probablement être joint en SQL pour avoir le nom -->
+              <h3 style="font-weight: bold;">Demande de Congé</h3>
+              <ion-note color="medium" style="font-size: 0.8em;">
+                {{ hist.nb_jours }} jrs
+              </ion-note>
+            </div>
+
+            <!-- Affichage des dates (date_debut -> date_fin) -->
+            <p>Du {{ hist.date_debut | date:'dd/MM/yy' }} au {{ hist.date_fin | date:'dd/MM/yy' }}</p>
+
+            <!-- Statut provenant de l'énumération 'statut_conge' -->
+            <p [style.color]="'var(--ion-color-' + getStatutColor(hist.statut) + ')'">
+              {{ hist.statut | titlecase }}
+            </p>
           </ion-label>
-        </ion-item>
-        <ion-item>
-          <ion-icon name="time" color="warning" slot="start"></ion-icon>
-          <ion-label>
-            <h3>Demande RTT</h3>
-            <p>En attente RH</p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
+        </ion-item> </ion-list>
     </ng-template>
   </ion-popover>
 </ion-content>
