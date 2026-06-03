@@ -27,4 +27,12 @@ export const routes: Routes = [
     path: 'profils',
     loadComponent: () => import('./pages/profils/profils.page').then( m => m.ProfilsPage)
   },
+  {
+    path: 'validation',
+    loadComponent: () => import('./pages/validation/validation.page').then( m => m.ValidationPage)
+  },
+  {
+    path: 'mes-absences',
+    loadComponent: () => import('./pages/mes-absences/mes-absences.page').then( m => m.MesAbsencesPage)
+  },
 ];

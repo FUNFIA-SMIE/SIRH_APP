@@ -1,87 +1,156 @@
 <ion-header class="ion-no-border">
-  <ion-toolbar color="primary">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/dashboard"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Nouvelle Demande</ion-title>
+  <ion-toolbar>
+    <div class="toolbar-inner">
+      <ion-buttons slot="start">
+        <ion-back-button defaultHref="/dashboard" class="back-btn"></ion-back-button>
+      </ion-buttons>
+      <span class="toolbar-title">Nouvelle Demande</span>
+      <div style="width: 40px"></div>
+    </div>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding bg-page">
-  <div class="profile-summary" *ngIf="token">
-    <ion-avatar>
-      <img [src]="token.photo_url" />
-    </ion-avatar>
-    <div class="user-info">
-      <h2>{{ token.prenom }} {{ token.nom }}</h2>
-      <p>{{ token?.poste }} • <span>{{ token?.matricule }}</span></p>
+<ion-content class="bg-page">
+
+  <!-- HERO PROFIL -->
+  <div class="hero-section" *ngIf="token">
+    <div class="hero-bg"></div>
+    <div class="profile-row">
+      <ion-avatar class="profile-avatar">
+        <img [src]="token.photo_url" />
+      </ion-avatar>
+      <div class="profile-info">
+        <h2>{{ token.prenom }} {{ token.nom }}</h2>
+        <p>{{ token?.poste }}</p>
+        <span class="matricule-tag">{{ token?.matricule }}</span>
+      </div>
     </div>
   </div>
 
-  <form [formGroup]="congeForm" (ngSubmit)="soumettreDemande()">
-    
-    <div class="glass-card ion-margin-bottom">
-      <ion-label class="section-label">Type de congé</ion-label>
-      <ion-item lines="none" class="custom-item">
-        <ion-select formControlName="type_conge_id" (ionChange)="onTypeChange()" placeholder="Choisir le type" interface="action-sheet" class="full-width">
-          <ion-select-option *ngFor="let t of typesConge" [value]="t.id">{{ t.libelle }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-      <div class="solde-banner" *ngIf="congeForm.get('type_conge_id')?.value">
-        <ion-icon name="information-circle-outline"></ion-icon>
-        <ion-label>Votre solde actuel : <strong>{{ solde_restant }} jours</strong></ion-label>
+  <div class="form-body">
+    <form [formGroup]="congeForm" (ngSubmit)="soumettreDemande()">
+
+      <!-- TYPE DE CONGÉ -->
+      <div class="card">
+        <div class="card-label">
+          <span class="label-dot blue"></span>
+          Type de congé
+        </div>
+        <ion-item lines="none" class="select-item">
+          <ion-select formControlName="type_conge_id" (ionChange)="onTypeChange()"
+            placeholder="Choisir le type" interface="action-sheet" class="full-width">
+            <ion-select-option *ngFor="let t of typesConge" [value]="t.id">
+              {{ t.libelle }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+        <div class="solde-banner" *ngIf="congeForm.get('type_conge_id')?.value">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <span>Solde actuel : <strong>{{ solde_restant }} {{ getSoldeUnite() }}</strong></span>
+        </div>
       </div>
-    </div>
 
-    <div class="glass-card ion-margin-bottom">
-      <ion-label class="section-label">Dates souhaitées</ion-label>
-      <ion-grid class="ion-no-padding">
-        <ion-row>
-          <ion-col size="6" class="date-col border-right">
-            <span class="small-label">DÉBUT</span>
-            <ion-datetime-button datetime="dateDebut"></ion-datetime-button>
-            <ion-checkbox formControlName="demi_journee_debut" (ionChange)="calculerJours()">Après-midi</ion-checkbox>
-          </ion-col>
-          <ion-col size="6" class="date-col">
-            <span class="small-label">FIN</span>
-            <ion-datetime-button datetime="dateFin"></ion-datetime-button>
-            <ion-checkbox formControlName="demi_journee_fin" (ionChange)="calculerJours()">Matin</ion-checkbox>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </div>
+      <!-- DATES -->
+      <div class="card">
+        <div class="card-label">
+          <span class="label-dot green"></span>
+          Dates souhaitées
+        </div>
+        <div class="dates-row">
 
-    <div class="glass-card ion-margin-bottom">
-      <ion-label class="section-label">Motif (Optionnel)</ion-label>
-      <ion-textarea formControlName="motif" rows="3" placeholder="Précisez la raison de votre demande..."></ion-textarea>
-    </div>
+          <div class="date-block" id="open-debut">
+            <span class="date-block-label">DÉBUT</span>
+            <div class="date-btn">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>{{ dateDebutAffiche }}</span>
+            </div>
+            <ion-checkbox formControlName="demi_journee_debut"
+              (ionChange)="calculerJours()" class="half-day-check">
+              Après-midi
+            </ion-checkbox>
+          </div>
 
-    <div class="upload-container" (click)="fileInput.click()" [class.success]="justificatifBase64">
-      <ion-icon [name]="justificatifBase64 ? 'checkmark-circle-outline' : 'document-attach-outline'"></ion-icon>
-      <p>{{ justificatifBase64 ? 'Document ajouté' : 'Joindre un justificatif' }}</p>
-      <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept=".pdf,image/*">
-    </div>
+          <div class="dates-separator">
+            <div class="separator-line"></div>
+            <ion-icon name="arrow-forward-outline" class="separator-icon"></ion-icon>
+            <div class="separator-line"></div>
+          </div>
 
-    <div class="form-footer">
-      <div class="total-badge">
-        <span class="days">{{ calculerJours() }}</span>
-        <span class="text">Jours total</span>
+          <div class="date-block" id="open-fin">
+            <span class="date-block-label">FIN</span>
+            <div class="date-btn">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>{{ dateFinAffiche }}</span>
+            </div>
+            <ion-checkbox formControlName="demi_journee_fin"
+              (ionChange)="calculerJours()" class="half-day-check">
+              Matin
+            </ion-checkbox>
+          </div>
+
+        </div>
       </div>
-      <ion-button expand="block" type="submit" [disabled]="!congeForm.valid" class="submit-btn" shape="round">
-        Soumettre à la RH
-      </ion-button>
-    </div>
 
-    <ion-modal [keepContentsMounted]="true">
-      <ng-template>
-        <ion-datetime id="dateDebut" formControlName="date_debut" presentation="date" (ionChange)="calculerJours()"></ion-datetime>
-      </ng-template>
-    </ion-modal>
-    <ion-modal [keepContentsMounted]="true">
-      <ng-template>
-        <ion-datetime id="dateFin" formControlName="date_fin" presentation="date" (ionChange)="calculerJours()"></ion-datetime>
-      </ng-template>
-    </ion-modal>
+      <!-- MOTIF -->
+      <div class="card">
+        <div class="card-label">
+          <span class="label-dot amber"></span>
+          Motif <span class="optional-tag">optionnel</span>
+        </div>
+        <ion-textarea formControlName="motif" rows="3"
+          placeholder="Précisez la raison de votre demande..."
+          class="motif-textarea">
+        </ion-textarea>
+      </div>
 
-  </form>
+      <!-- JUSTIFICATIF -->
+      <div class="upload-zone" (click)="fileInput.click()" [class.uploaded]="justificatifBase64">
+        <div class="upload-icon-wrap" [class.uploaded]="justificatifBase64">
+          <ion-icon [name]="justificatifBase64 ? 'checkmark-circle-outline' : 'cloud-upload-outline'"></ion-icon>
+        </div>
+        <p class="upload-title">{{ justificatifBase64 ? 'Document joint' : 'Joindre un justificatif' }}</p>
+        <p class="upload-sub">{{ justificatifBase64 ? 'Appuyez pour changer' : 'PDF ou image acceptés' }}</p>
+        <input type="file" #fileInput hidden (change)="onFileSelected($event)" accept=".pdf,image/*">
+      </div>
+
+      <!-- FOOTER -->
+      <div class="form-footer">
+        <div class="days-counter">
+          <span class="days-num">{{ calculerJours() }}</span>
+          <span class="days-label">jours</span>
+        </div>
+        <ion-button expand="block" type="submit"
+          [disabled]="!congeForm.valid" class="submit-btn">
+          <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+          Soumettre à la RH
+        </ion-button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- MODAL DÉBUT -->
+  <ion-modal trigger="open-debut" [keepContentsMounted]="true">
+    <ng-template>
+      <div [formGroup]="congeForm">
+        <ion-datetime formControlName="date_debut" presentation="date"
+          [min]="today" locale="fr-FR" (ionChange)="calculerJours()"
+          showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
+        </ion-datetime>
+      </div>
+    </ng-template>
+  </ion-modal>
+
+  <!-- MODAL FIN -->
+  <ion-modal trigger="open-fin" [keepContentsMounted]="true">
+    <ng-template>
+      <div [formGroup]="congeForm">
+        <ion-datetime formControlName="date_fin" presentation="date"
+          [min]="today" locale="fr-FR" (ionChange)="calculerJours()"
+          showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
+        </ion-datetime>
+      </div>
+    </ng-template>
+  </ion-modal>
+
 </ion-content>

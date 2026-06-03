@@ -5,9 +5,13 @@ import { addIcons } from 'ionicons';
 import {
   notificationsOutline, addCircleOutline, calendarOutline,
   documentTextOutline, personOutline, checkmarkCircle, time,
-  calendarNumberOutline, logOutOutline
+  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { Subscription, interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { NotificationService } from 'src/app/services/notification';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -20,16 +24,28 @@ export class DashboardPage implements OnInit {
   token: any = null;
   historiques: any;
   solde_conges: any;
+  private pollingSubscription?: Subscription;
+  private dernierStatuts: Map<number, string> = new Map();
 
   constructor(
     private navCtrl: NavController,
-    private srvc: ServiceSirh
+    private srvc: ServiceSirh,
+    private notifService: NotificationService
   ) {
     addIcons({
       notificationsOutline, addCircleOutline, calendarOutline,
       documentTextOutline, personOutline, checkmarkCircle, time,
-      calendarNumberOutline, logOutOutline
+      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle
     });
+  }
+
+  get soldeAffiche(): number {
+    return Math.max(0, this.solde_conges?.[0]?.soldes?.[0]?.solde_restant ?? 0);
+  }
+
+  get soldePercent(): number {
+    const s = this.solde_conges?.[0]?.soldes?.[0]?.solde_restant ?? 0;
+    return Math.min(100, Math.max(0, (s / 30) * 100));
   }
 
   async ngOnInit(): Promise<void> {
@@ -50,6 +66,54 @@ export class DashboardPage implements OnInit {
 
     console.log("Solde filtré = ", this.solde_conges);
 
+    await this.notifService.init();  // ← initialiser les push notifs
+    await this.chargerDonnees();
+    this.startPolling();
+
+  }
+
+
+  async chargerDonnees() {
+    const data = localStorage.getItem('utilisateur');
+    if (data) {
+      this.token = JSON.parse(data);
+      this.historiques = await this.srvc.getHistorique(this.token.employe_id).toPromise();
+    }
+    this.solde_conges = await this.srvc.solde_conges_employe().toPromise();
+    this.solde_conges = this.solde_conges.filter(
+      (p: any) => p.employe_id === this.token.employe_id
+    );
+  }
+
+  // ─── POLLING TOUTES LES 30 SECONDES ─────────────────────────
+  startPolling() {
+    this.pollingSubscription = interval(30000).pipe(
+      switchMap(() => this.srvc.getHistorique(this.token.employe_id))
+    ).subscribe((nouvelles: any[]) => {
+      this.detecterChangementsStatut(nouvelles);
+      this.historiques = nouvelles;
+    });
+  }
+
+  // ─── DÉTECTER UN CHANGEMENT ET NOTIFIER ─────────────────────
+  detecterChangementsStatut(nouvelles: any[]) {
+    nouvelles.forEach(conge => {
+      const ancienStatut = this.dernierStatuts.get(conge.id);
+
+      if (ancienStatut && ancienStatut !== conge.statut) {
+        // Le statut a changé !
+        const label = this.getStatutLabel(conge.statut);
+        const emoji = conge.statut === 'approuve' ? '✅' : '❌';
+
+        this.notifService.showLocalNotification(
+          `${emoji} Congé ${label}`,
+          `Votre demande du ${conge.date_debut} au ${conge.date_fin} a été ${label.toLowerCase()}.`
+        );
+      }
+
+      // Mémoriser le statut actuel
+      this.dernierStatuts.set(conge.id, conge.statut);
+    });
   }
 
   get userInitials(): string {
@@ -60,10 +124,14 @@ export class DashboardPage implements OnInit {
   }
 
   navDemande() { this.navCtrl.navigateForward('/demande-conge'); }
+  navAbsences() { this.navCtrl.navigateForward('/mes-absences'); }
   navProfil() { this.navCtrl.navigateForward('/profils'); }
+  navValidation() { this.navCtrl.navigateForward('/validation'); }
 
   logout() {
     localStorage.removeItem('utilisateur');
+    localStorage.removeItem('token');
+
     this.navCtrl.navigateRoot('/login', { animationDirection: 'back' });
   }
 

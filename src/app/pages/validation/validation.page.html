@@ -1,0 +1,180 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <div class="toolbar-inner">
+      <ion-buttons slot="start">
+        <ion-buttons slot="start">
+          <ion-button (click)="goBack()" class="back-btn">
+            <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ion-buttons> </ion-buttons>
+      <span class="toolbar-title">Validation Congés</span>
+      <div class="notif-count" *ngIf="countEnAttente > 0">{{ countEnAttente }}</div>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-page">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-item amber">
+      <span class="kpi-num">{{ countEnAttente }}</span>
+      <span class="kpi-label">En attente</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item blue">
+      <span class="kpi-num">{{ totalJoursDemandes }}</span>
+      <span class="kpi-label">Jours</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item green">
+      <span class="kpi-num">{{ countApprouves }}</span>
+      <span class="kpi-label">Approuvés</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item red">
+      <span class="kpi-num">{{ countRefuses }}</span>
+      <span class="kpi-label">Refusés</span>
+    </div>
+  </div>
+
+  <!-- FILTRES -->
+  <div class="filters-row">
+    <div class="search-wrap">
+      <ion-icon name="search-outline" class="search-icon"></ion-icon>
+      <input [(ngModel)]="searchQuery" name="searchQuery" (input)="applyFilters()" placeholder="Rechercher..."
+        class="search-input-native" />
+    </div>
+
+    <select [(ngModel)]="filterStatut" name="filterStatut" (change)="applyFilters()" class="filter-select-native">
+      <option value="">Tous</option>
+      <option value="en_attente_manager">Att. manager</option>
+      <option value="en_attente_rh">Att. RH</option>
+      <option value="approuve">Approuvé</option>
+      <option value="refuse">Refusé</option>
+    </select>
+  </div>
+
+  <!-- LISTE DES DEMANDES -->
+  <div class="list-body">
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state" *ngIf="filtered?.length === 0">
+      <ion-icon name="checkmark-done-circle-outline"></ion-icon>
+      <p>Aucune demande à afficher</p>
+    </div>
+
+    <!-- CARTE DEMANDE -->
+    <div class="demand-card" *ngFor="let d of filtered; let i = index">
+      <div class="card-accent" [style.background]="accentColor(d.statut)"></div>
+
+      <!-- EN-TÊTE CARTE -->
+      <div class="card-header">
+        <div class="employee-row">
+          <div class="avatar" [ngStyle]="avatarStyle(i)">
+            <img *ngIf="d.employe.photo_url" [src]="d.employe.photo_url" />
+            <span *ngIf="!d.employe.photo_url">
+              {{ initiales(d.employe.nom) }}{{ d.employe.prenom?.charAt(0) }}
+            </span>
+          </div>
+          <div class="employee-info">
+            <h4>{{ d.employe.nom }} {{ d.employe.prenom }}</h4>
+            <p>{{ d.employe.poste }} · {{ d.employe.matricule }}</p>
+          </div>
+        </div>
+        <span class="status-badge" [ngClass]="statutBadgeClass(d.statut)">
+          {{ statutLabel(d.statut) }}
+        </span>
+      </div>
+
+      <!-- DÉTAILS -->
+      <div class="card-details">
+        <div class="detail-row">
+          <div class="detail-item">
+            <span>
+              <ion-badge color="medium" mode="ios" style="font-weight: 500; padding: 4px 8px;">
+                Demande du {{ d.date_demande | date:'dd/MM/yyyy' }}
+              </ion-badge>
+            </span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <ion-icon name="briefcase-outline"></ion-icon>
+            <span>{{ d.typeConge?.libelle }}</span>
+          </div>
+          <div class="detail-item">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>{{ d.dateDebut | date:'dd/MM' }} → {{ d.dateFin | date:'dd/MM/yy' }}</span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <ion-icon name="time-outline"></ion-icon>
+            <span><strong>{{ d.nbJours }} jour{{ d.nbJours > 1 ? 's' : '' }}</strong></span>
+          </div>
+          <div class="detail-item" *ngIf="d.motif">
+            <ion-icon name="chatbubble-outline"></ion-icon>
+            <span class="motif-text">{{ d.motif }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS (seulement si en attente) -->
+      <div class="card-actions" *ngIf="d.statut === 'en_attente_manager' || d.statut === 'en_attente_rh'">
+        <button class="btn-refuse" (click)="ouvrirModalRefus(d)">
+          <ion-icon name="close-outline"></ion-icon>
+          Refuser
+        </button>
+        <button class="btn-approve" (click)="approuver(d)">
+          <ion-icon name="checkmark-outline"></ion-icon>
+          Approuver
+        </button>
+      </div>
+
+      <!-- COMMENTAIRE REFUS -->
+      <div class="refus-comment" *ngIf="d.statut === 'refuse' && d.commentaireRefus">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>{{ d.commentaireRefus }}</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL REFUS -->
+  <ion-modal [isOpen]="modalRefusVisible" (didDismiss)="closeModal()" [breakpoints]="[0, 0.5, 0.75]"
+    [initialBreakpoint]="0.5">
+    <ng-template>
+      <ion-header class="ion-no-border">
+        <ion-toolbar class="modal-toolbar">
+          <div class="modal-handle"></div>
+          <ion-title class="modal-title">Motif de refus</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="modal-content">
+        <p class="modal-sub">Ce commentaire sera visible par l'employé.</p>
+        <div class="modal-textarea-wrap" [class.error]="motifRefusError">
+          <textarea [(ngModel)]="motifRefus" name="motifRefus" rows="4"
+            placeholder="Saisissez le motif de refus (obligatoire)..." class="modal-textarea">
+</textarea>
+        </div>
+        <p class="modal-error" *ngIf="motifRefusError">Le motif est obligatoire.</p>
+        <div class="modal-actions">
+          <button class="modal-btn-cancel" (click)="closeModal()">Annuler</button>
+          <button class="modal-btn-confirm" (click)="confirmerRefus()">
+            <ion-icon name="close-circle-outline"></ion-icon>
+            Confirmer le refus
+          </button>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" *ngIf="notification" [ngClass]="'toast-' + notification.type">
+    <ion-icon [name]="notification.type === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline'"></ion-icon>
+    <span>{{ notification.message }}</span>
+  </div>
+
+</ion-content>

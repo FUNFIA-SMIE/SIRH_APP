@@ -15,8 +15,9 @@ import {
   AlertController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, businessOutline, shieldCheckmarkOutline, warningOutline, logInOutline } from 'ionicons/icons';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -43,8 +44,9 @@ export class LoginPage {
     private http: HttpClient,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
+    private router: Router
   ) {
-    addIcons({ personOutline, lockClosedOutline, eyeOutline, eyeOffOutline });
+    addIcons({shieldCheckmarkOutline,personOutline,lockClosedOutline,warningOutline,logInOutline,businessOutline,eyeOutline,eyeOffOutline});
   }
 
   togglePassword(): void {
@@ -94,7 +96,7 @@ export class LoginPage {
         this.isLoading = false;
         localStorage.setItem('token', res.token);
         localStorage.setItem('utilisateur', JSON.stringify(res.utilisateur));
-
+/*
         const toast = await this.toastCtrl.create({
           message: `Bienvenue ${res.utilisateur.prenom} ${res.utilisateur.nom} 👋`,
           duration: 2500,
@@ -102,10 +104,10 @@ export class LoginPage {
           position: 'top',
         });
         await toast.present();
-
-        this.navCtrl.navigateRoot('/dashboard', {
-          animated: true,
-          animationDirection: 'forward'
+*/
+        this.router.navigateByUrl('/dashboard', {
+          //animated: true,
+          //animationDirection: 'forward'
         });
       },
 

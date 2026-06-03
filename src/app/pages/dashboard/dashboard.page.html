@@ -2,27 +2,29 @@
   <ion-toolbar>
     <div class="header-inner">
       <div class="header-top">
-        <span class="header-title">Tableau de bord</span>
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-name">SIRH</span>
+        </div>
         <div class="header-actions">
-          <ion-button fill="clear" id="open-notif">
+          <ion-button fill="clear" id="open-notif" class="icon-btn">
             <ion-icon name="notifications-outline"></ion-icon>
             <div class="notif-dot"></div>
           </ion-button>
-          <ion-button fill="clear" class="logout-btn" (click)="logout()">
+          <ion-button fill="clear" class="icon-btn logout-btn" (click)="logout()">
             <ion-icon name="log-out-outline"></ion-icon>
           </ion-button>
         </div>
       </div>
+
       <div class="user-info">
         <div class="avatar-circle">
-          <!-- Si le token contient une image, on l'affiche -->
           <img *ngIf="token?.photo_url" [src]="token.photo_url" alt="Avatar">
-
-          <!-- Sinon on affiche les initiales -->
         </div>
         <div class="text">
-          <h3>Bonjour,</h3>
+          <p class="greeting">Bonjour 👋</p>
           <h1>{{ token?.prenom }} {{ token?.nom }}</h1>
+          <span class="matricule-badge">{{ token?.matricule }}</span>
         </div>
       </div>
     </div>
@@ -32,113 +34,117 @@
 <ion-content>
   <div class="content-inner">
 
-    <!-- Solde -->
+    <!-- SOLDE CARD -->
     <div class="balance-card">
-      <div>
+      <div class="balance-left">
         <p class="balance-label">Solde congés payés</p>
-        <h2 class="balance-value">{{solde_conges[0].soldes[0].solde_restant}} <small>jours</small></h2>
+        <h2 class="balance-value">
+          {{ solde_conges?.[0]?.soldes?.[0]?.solde_restant }}
+          <small>jours</small>
+        </h2>
+        <div class="progress-track">
+          <div class="progress-fill" [style.width.%]="soldePercent"></div>
+        </div>
       </div>
       <div class="balance-icon">
         <ion-icon name="calendar-number-outline"></ion-icon>
       </div>
     </div>
 
-    <!-- Actions -->
+    <!-- ACTIONS RAPIDES -->
     <p class="section-title">Actions rapides</p>
-    <ion-grid class="ion-no-padding">
-      <ion-row>
-        <ion-col size="6">
-          <div class="menu-item" (click)="navDemande()">
-            <div class="action-icon green-icon">
-              <ion-icon name="add-circle-outline"></ion-icon>
-            </div>
-            <span>Nouvelle demande</span>
-          </div>
-        </ion-col>
-        <ion-col size="6">
-          <div class="menu-item">
-            <div class="action-icon blue-icon">
-              <ion-icon name="calendar-outline"></ion-icon>
-            </div>
-            <span>Mes absences</span>
-          </div>
-        </ion-col>
-        <ion-col size="6">
-          <div class="menu-item">
-            <div class="action-icon amber-icon">
-              <ion-icon name="document-text-outline"></ion-icon>
-            </div>
-            <span>Mes bulletins</span>
-          </div>
-        </ion-col>
-        <ion-col size="6">
-          <div class="menu-item" (click)="navProfil()">
-            <div class="action-icon rose-icon">
-              <ion-icon name="person-outline"></ion-icon>
-            </div>
-            <span>Profil</span>
-          </div>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
+    <div class="actions-grid">
 
-    <!-- Activité récente -->
-    <p class="section-title">Activité récente</p>
-    <div class="notif-list">
-
-      <div class="notif-item" *ngFor="let hist of historiques">
-        <div class="notif-dot-icon" [ngClass]="getStatutClass(hist.statut)">
-          <ion-icon [name]="getStatutIcon(hist.statut)"></ion-icon>
+      <div class="action-card green" (click)="navDemande()">
+        <div class="action-icon-wrap">
+          <ion-icon name="add-circle-outline"></ion-icon>
         </div>
+        <span>Nouvelle<br>demande</span>
+      </div>
 
-        <div class="notif-text">
-          <h4>Congé</h4>
-          <!-- On garde uniquement l'intervalle de dates -->
-          <p>Période : {{ hist.date_debut | date:'dd/MM' }} - {{ hist.date_fin | date:'dd/MM' }} ({{hist.nb_jours}} j )</p>
+      <div class="action-card blue" (click)="navAbsences()">
+        <div class="action-icon-wrap">
+          <ion-icon name="calendar-outline"></ion-icon>
         </div>
+        <span>Mes<br>absences</span>
+      </div>
+<!--
+      <div class="action-card amber">
+        <div class="action-icon-wrap">
+          <ion-icon name="document-text-outline"></ion-icon>
+        </div>
+        <span>Mes<br>bulletins</span>
+      </div>
+    -->
+      <div class="action-card rose" (click)="navValidation()">
+        <div class="action-icon-wrap">
+          <ion-icon name="shield-checkmark-outline"></ion-icon>
+        </div>
+        <span>Validation<br>Congé</span>
+      </div>
 
-        <span class="badge" [ngClass]="'badge-' + getStatutClass(hist.statut)">
-          {{ getStatutLabel(hist.statut) }}
-        </span>
+      <div class="action-card indigo" (click)="navProfil()">
+        <div class="action-icon-wrap">
+          <ion-icon name="person-outline"></ion-icon>
+        </div>
+        <span>Mon<br>profil</span>
       </div>
 
     </div>
 
-    <!-- Logout bas de page -->
+    <!-- ACTIVITÉ RÉCENTE -->
+    <p class="section-title">Activité récente</p>
+    <div class="activity-list">
+      <div class="activity-item" *ngFor="let hist of historiques">
+        <div class="activity-icon" [ngClass]="getStatutClass(hist.statut)">
+          <ion-icon [name]="getStatutIcon(hist.statut)"></ion-icon>
+        </div>
+        <div class="activity-text">
+          <h4>Demande de congé</h4>
+          <p>{{ hist.date_debut | date:'dd MMM' }} — {{ hist.date_fin | date:'dd MMM yyyy' }}
+            &nbsp;·&nbsp; <strong>{{ hist.nb_jours }} j</strong></p>
+        </div>
+        <span class="status-pill" [ngClass]="'pill-' + getStatutClass(hist.statut)">
+          {{ getStatutLabel(hist.statut) }}
+        </span>
+      </div>
+
+      <div class="empty-state" *ngIf="!historiques?.length">
+        <ion-icon name="receipt-outline"></ion-icon>
+        <p>Aucune activité récente</p>
+      </div>
+    </div>
+
+    <!-- LOGOUT -->
     <div class="logout-row" (click)="logout()">
-      <ion-icon name="log-out-outline" color="danger"></ion-icon>
+      <ion-icon name="log-out-outline"></ion-icon>
       <span>Se déconnecter</span>
     </div>
 
   </div>
 
+  <!-- POPOVER NOTIFICATIONS -->
   <ion-popover trigger="open-notif" triggerAction="click" [dismissOnSelect]="true">
     <ng-template>
+      <div class="notif-header">
+        <span>Notifications</span>
+      </div>
       <ion-list lines="full">
-
         <ion-item *ngFor="let hist of historiques" [button]="true">
-          <!-- Icône dont la couleur change selon le statut SQL -->
-          <ion-icon slot="start" name="time" [color]="getStatutColor(hist.statut)">
-          </ion-icon>
-
+          <ion-icon slot="start" name="time" [color]="getStatutColor(hist.statut)"></ion-icon>
           <ion-label>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <!-- type_conge_id devra probablement être joint en SQL pour avoir le nom -->
-              <h3 style="font-weight: bold;">Demande de Congé</h3>
-              <ion-note color="medium" style="font-size: 0.8em;">
-                {{ hist.nb_jours }} jrs
-              </ion-note>
+            <div class="notif-row">
+              <h3>Demande de Congé</h3>
+              <ion-note color="medium">{{ hist.nb_jours }} jrs</ion-note>
             </div>
-
-            <!-- Affichage des dates (date_debut -> date_fin) -->
             <p>Du {{ hist.date_debut | date:'dd/MM/yy' }} au {{ hist.date_fin | date:'dd/MM/yy' }}</p>
-
-            <!-- Statut provenant de l'énumération 'statut_conge' -->
             <p [style.color]="'var(--ion-color-' + getStatutColor(hist.statut) + ')'">
               {{ hist.statut | titlecase }}
             </p>
           </ion-label>
-        </ion-item> </ion-list>
+        </ion-item>
+      </ion-list>
     </ng-template>
   </ion-popover>
+
 </ion-content>
