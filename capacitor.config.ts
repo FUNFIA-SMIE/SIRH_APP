@@ -9,6 +9,11 @@ const config: CapacitorConfig = {
     cleartext: true
   },
   plugins: {
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_grey',
+      iconColor: '#3b82f6',
+      sound: 'default',
+    },
     CapacitorHttp: {
       enabled: true
     }
