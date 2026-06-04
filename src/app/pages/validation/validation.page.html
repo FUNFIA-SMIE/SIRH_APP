@@ -64,81 +64,93 @@
       <p>Aucune demande à afficher</p>
     </div>
 
-    <!-- CARTE DEMANDE -->
-    <div class="demand-card" *ngFor="let d of filtered; let i = index">
-      <div class="card-accent" [style.background]="accentColor(d.statut)"></div>
+<div class="demand-card" *ngFor="let d of filtered; let i = index">
+  <div class="card-accent" [style.background]="accentColor(d.statut)"></div>
 
-      <!-- EN-TÊTE CARTE -->
-      <div class="card-header">
-        <div class="employee-row">
-          <div class="avatar" [ngStyle]="avatarStyle(i)">
-            <img *ngIf="d.employe.photo_url" [src]="d.employe.photo_url" />
-            <span *ngIf="!d.employe.photo_url">
-              {{ initiales(d.employe.nom) }}{{ d.employe.prenom?.charAt(0) }}
-            </span>
-          </div>
-          <div class="employee-info">
-            <h4>{{ d.employe.nom }} {{ d.employe.prenom }}</h4>
-            <p>{{ d.employe.poste }} · {{ d.employe.matricule }}</p>
-          </div>
-        </div>
-        <span class="status-badge" [ngClass]="statutBadgeClass(d.statut)">
-          {{ statutLabel(d.statut) }}
+  <!-- BANDEAU AJUSTEMENT — en dehors du card-header -->
+  <div class="ajust-banner" *ngIf="isAjustement(d)">
+    ⚙️ Ajustement manuel de solde
+  </div>
+
+  <!-- EN-TÊTE CARTE -->
+  <div class="card-header">
+    <div class="employee-row">
+      <div class="avatar" [ngStyle]="avatarStyle(i)">
+        <img *ngIf="d.employe.photo_url" [src]="d.employe.photo_url" />
+        <span *ngIf="!d.employe.photo_url">
+          {{ initiales(d.employe.nom) }}{{ d.employe.prenom?.charAt(0) }}
         </span>
       </div>
-
-      <!-- DÉTAILS -->
-      <div class="card-details">
-        <div class="detail-row">
-          <div class="detail-item">
-            <span>
-              <ion-badge color="medium" mode="ios" style="font-weight: 500; padding: 4px 8px;">
-                Demande du {{ d.date_demande | date:'dd/MM/yyyy' }}
-              </ion-badge>
-            </span>
-          </div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-item">
-            <ion-icon name="briefcase-outline"></ion-icon>
-            <span>{{ d.typeConge?.libelle }}</span>
-          </div>
-          <div class="detail-item">
-            <ion-icon name="calendar-outline"></ion-icon>
-            <span>{{ d.dateDebut | date:'dd/MM' }} → {{ d.dateFin | date:'dd/MM/yy' }}</span>
-          </div>
-        </div>
-        <div class="detail-row">
-          <div class="detail-item">
-            <ion-icon name="time-outline"></ion-icon>
-            <span><strong>{{ d.nbJours }} jour{{ d.nbJours > 1 ? 's' : '' }}</strong></span>
-          </div>
-          <div class="detail-item" *ngIf="d.motif">
-            <ion-icon name="chatbubble-outline"></ion-icon>
-            <span class="motif-text">{{ d.motif }}</span>
-          </div>
-        </div>
+      <div class="employee-info">
+        <h4>{{ d.employe.nom }} {{ d.employe.prenom }}</h4>
+        <p>{{ d.employe.poste }} · {{ d.employe.matricule }}</p>
       </div>
-
-      <!-- ACTIONS (seulement si en attente) -->
-      <div class="card-actions" *ngIf="d.statut === 'en_attente_manager' || d.statut === 'en_attente_rh'">
-        <button class="btn-refuse" (click)="ouvrirModalRefus(d)">
-          <ion-icon name="close-outline"></ion-icon>
-          Refuser
-        </button>
-        <button class="btn-approve" (click)="approuver(d)">
-          <ion-icon name="checkmark-outline"></ion-icon>
-          Approuver
-        </button>
-      </div>
-
-      <!-- COMMENTAIRE REFUS -->
-      <div class="refus-comment" *ngIf="d.statut === 'refuse' && d.commentaireRefus">
-        <ion-icon name="alert-circle-outline"></ion-icon>
-        <span>{{ d.commentaireRefus }}</span>
-      </div>
-
     </div>
+    <span class="status-badge" [ngClass]="statutBadgeClass(d.statut)">
+      {{ statutLabel(d.statut) }}
+    </span>
+  </div>
+
+  <!-- DÉTAILS -->
+  <div class="card-details">
+    <div class="detail-row">
+      <div class="detail-item">
+        <span>
+          <ion-badge color="medium" mode="ios" style="font-weight: 500; padding: 4px 8px;">
+            Demande du {{ d.date_demande | date:'dd/MM/yyyy' }}
+          </ion-badge>
+        </span>
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item">
+        <ion-icon name="briefcase-outline"></ion-icon>
+        <span>{{ d.typeConge?.libelle }}</span>
+      </div>
+      <div class="detail-item">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <span>{{ d.dateDebut | date:'dd/MM' }} → {{ d.dateFin | date:'dd/MM/yy' }}</span>
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-item">
+        <ion-icon name="time-outline"></ion-icon>
+        <span><strong>{{ d.nbJours }} jour{{ d.nbJours > 1 ? 's' : '' }}</strong></span>
+      </div>
+
+      <!-- MOTIF NORMAL -->
+      <div class="detail-item" *ngIf="d.motif && !isAjustement(d)">
+        <ion-icon name="chatbubble-outline"></ion-icon>
+        <span class="motif-text">{{ d.motif }}</span>
+      </div>
+
+      <!-- AJUSTEMENT TEXTE -->
+      <div class="detail-item ajust-badge" *ngIf="isAjustement(d)">
+        <ion-icon name="calculator-outline"></ion-icon>
+        <span>{{ getAjustementTexte(d) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="card-actions" *ngIf="d.statut === 'en_attente_manager' || d.statut === 'en_attente_rh'">
+    <button class="btn-refuse" (click)="ouvrirModalRefus(d)">
+      <ion-icon name="close-outline"></ion-icon>
+      Refuser
+    </button>
+    <button class="btn-approve" (click)="approuver(d)">
+      <ion-icon name="checkmark-outline"></ion-icon>
+      Approuver
+    </button>
+  </div>
+
+  <!-- COMMENTAIRE REFUS -->
+  <div class="refus-comment" *ngIf="d.statut === 'refuse' && d.commentaireRefus">
+    <ion-icon name="alert-circle-outline"></ion-icon>
+    <span>{{ d.commentaireRefus }}</span>
+  </div>
+
+</div>
 
   </div>
 

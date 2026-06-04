@@ -6,7 +6,7 @@ import {
   arrowBackOutline, searchOutline, briefcaseOutline, calendarOutline,
   timeOutline, chatbubbleOutline, closeOutline, checkmarkOutline,
   alertCircleOutline, closeCircleOutline, checkmarkCircleOutline,
-  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline } from 'ionicons/icons';
+  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline, calculatorOutline } from 'ionicons/icons';
 import { NavController, IonTextarea } from '@ionic/angular/standalone';
 import { ServiceSirh } from 'src/app/services/service-sirh';
 import { addIcons } from 'ionicons';
@@ -27,7 +27,7 @@ export class MesAbsencesPage implements OnInit {
     private service: ServiceSirh
 
   ) {
-    addIcons({arrowBackOutline,searchOutline,checkmarkDoneCircleOutline,briefcaseOutline,calendarOutline,timeOutline,chatbubbleOutline,documentTextOutline,alertCircleOutline,closeOutline,checkmarkOutline,closeCircleOutline,checkmarkCircleOutline,informationCircleOutline});
+    addIcons({arrowBackOutline,searchOutline,checkmarkDoneCircleOutline,briefcaseOutline,calendarOutline,timeOutline,chatbubbleOutline,calculatorOutline,alertCircleOutline,documentTextOutline,closeOutline,checkmarkOutline,closeCircleOutline,checkmarkCircleOutline,informationCircleOutline});
   }
 
   allDemandes: any[] = [];
@@ -39,16 +39,16 @@ export class MesAbsencesPage implements OnInit {
     ).length;
   }
 
-get totalJoursDemandes() {
-  return this.allDemandes.reduce((s: any, d: any) => {
-    // Si la demande est refusée, on n'ajoute rien
-    if (d.statut === 'refuse') {
-      return s;
-    }
-    // Sinon, on ajoute le nombre exact de jours (ex: 0.5, 1, 1.5...)
-    return s + d.nbJours;
-  }, 0);
-}
+  get totalJoursDemandes() {
+    return this.allDemandes.reduce((s: any, d: any) => {
+      // Si la demande est refusée, on n'ajoute rien
+      if (d.statut === 'refuse') {
+        return s;
+      }
+      // Sinon, on ajoute le nombre exact de jours (ex: 0.5, 1, 1.5...)
+      return s + d.nbJours;
+    }, 0);
+  }
 
   get countApprouves() {
     return this.allDemandes.filter((d: any) => d.statut === 'approuve').length;
@@ -198,5 +198,14 @@ get totalJoursDemandes() {
       brouillon: 'Brouillon',
     };
     return map[statut] ?? statut;
+
+  }
+
+  isAjustement(d: any): boolean {
+    return d?.motif?.startsWith('[AJUSTEMENT MANUEL]');
+  }
+
+  getAjustementTexte(d: any): string {
+    return d?.motif?.replace('[AJUSTEMENT MANUEL]', '').trim() || 'Ajustement de solde';
   }
 }

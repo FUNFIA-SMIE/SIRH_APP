@@ -69,6 +69,11 @@
     <div class="demand-card" *ngFor="let d of filtered; let i = index">
       <div class="card-accent" [style.background]="accentColor(d.statut)"></div>
 
+      <!-- BANDEAU AJUSTEMENT -->
+      <div class="ajust-banner" *ngIf="isAjustement(d)">
+        ⚙️ Ajustement manuel de solde
+      </div>
+
       <!-- EN-TÊTE CARTE -->
       <div class="card-header">
         <div class="employee-row">
@@ -103,24 +108,31 @@
             <ion-icon name="briefcase-outline"></ion-icon>
             <span>{{ d.typeConge?.libelle }}</span>
           </div>
-          <div class="detail-item">
+          <div class="detail-item" *ngIf="!isAjustement(d)">
             <ion-icon name="calendar-outline"></ion-icon>
             <span>{{ d.dateDebut | date:'dd/MM' }} → {{ d.dateFin | date:'dd/MM/yy' }}</span>
           </div>
         </div>
+
         <div class="detail-row">
-          <div class="detail-item">
+          <div class="detail-item" *ngIf="!isAjustement(d)">
             <ion-icon name="time-outline"></ion-icon>
             <span><strong>{{ d.nbJours }} jour{{ d.nbJours > 1 ? 's' : '' }}</strong></span>
           </div>
-          <div class="detail-item" *ngIf="d.motif">
+
+          <!-- MOTIF NORMAL -->
+          <div class="detail-item" *ngIf="d.motif && !isAjustement(d)">
             <ion-icon name="chatbubble-outline"></ion-icon>
             <span class="motif-text">{{ d.motif }}</span>
           </div>
+
+          <!-- AJUSTEMENT TEXTE -->
+          <div class="detail-item ajust-badge" *ngIf="isAjustement(d)">
+            <ion-icon name="calculator-outline"></ion-icon>
+            <span>{{ getAjustementTexte(d) }}</span>
+          </div>
         </div>
       </div>
-
-
 
       <!-- COMMENTAIRE REFUS -->
       <div class="refus-comment" *ngIf="d.statut === 'refuse' && d.commentaireRefus">

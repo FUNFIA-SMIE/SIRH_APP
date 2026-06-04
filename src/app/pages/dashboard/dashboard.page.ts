@@ -5,7 +5,7 @@ import { addIcons } from 'ionicons';
 import {
   notificationsOutline, addCircleOutline, calendarOutline,
   documentTextOutline, personOutline, checkmarkCircle, time,
-  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle
+  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
 import { Subscription, interval } from 'rxjs';
@@ -22,7 +22,7 @@ import { NotificationService } from 'src/app/services/notification';
 })
 export class DashboardPage implements OnInit {
   token: any = null;
-  historiques: any;
+  historiques: any[] = [];
   solde_conges: any;
   private pollingSubscription?: Subscription;
   private dernierStatuts: Map<number, string> = new Map();
@@ -35,7 +35,7 @@ export class DashboardPage implements OnInit {
     addIcons({
       notificationsOutline, addCircleOutline, calendarOutline,
       documentTextOutline, personOutline, checkmarkCircle, time,
-      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle
+      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline
     });
   }
 
@@ -52,24 +52,41 @@ export class DashboardPage implements OnInit {
     const data = localStorage.getItem('utilisateur');
     if (data) {
       this.token = JSON.parse(data);
-      this.historiques = await this.srvc.getHistorique(this.token.employe_id).toPromise();
-      console.log(this.historiques, this.token)
-
+      this.historiques = await this.srvc.getHistorique(
+        this.token.employe_id
+      ).toPromise() as any[];
     }
-    this.solde_conges = await this.srvc.solde_conges_employe().toPromise();
-    console.log("Données reçues = ", this.solde_conges);
 
-    // On utilise === pour comparer l'ID de l'employé
-    this.solde_conges = this.solde_conges.filter((p: any) => {
-      return p.employe_id === this.token.employe_id;
-    });
+    this.solde_conges = await this.srvc.solde_conges_employe().toPromise() as any[];
+    this.solde_conges = this.solde_conges.filter(
+      (p: any) => p.employe_id === this.token.employe_id
+    );
 
-    console.log("Solde filtré = ", this.solde_conges);
-
-    await this.notifService.init();  // ← initialiser les push notifs
+    await this.notifService.init();
     await this.chargerDonnees();
-    this.startPolling();
 
+    // ─── Vérifier si l'utilisateur est manager ───────────────
+    const poste = await this.srvc.getPosteById(
+      this.token.poste_id
+    ).toPromise() as any;
+
+    const is_manager = [
+      'MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'
+    ].includes(poste?.intitule);
+
+    this.notifService.connectSocket(this.token.employe_id, is_manager);
+  }
+
+  ngOnDestroy() {
+    this.notifService.disconnectSocket();
+  }
+
+  isAjustement(hist: any): boolean {
+    return hist?.motif?.startsWith('[AJUSTEMENT MANUEL]');
+  }
+
+  getAjustementTexte(hist: any): string {
+    return hist?.motif?.replace('[AJUSTEMENT MANUEL]', '').trim() || 'Ajustement de solde';
   }
 
 

@@ -1,22 +1,22 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule } from '@angular/forms';
-import { IonSelectOption,IonBadge, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonIcon, IonModal, IonButton } from '@ionic/angular/standalone';
+import { IonSelectOption, IonBadge, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonIcon, IonModal, IonButton } from '@ionic/angular/standalone';
 import { ServiceSirh } from 'src/app/services/service-sirh';
-import { NavController,IonTextarea } from '@ionic/angular/standalone';
+import { NavController, IonTextarea } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   arrowBackOutline, searchOutline, briefcaseOutline, calendarOutline,
   timeOutline, chatbubbleOutline, closeOutline, checkmarkOutline,
   alertCircleOutline, closeCircleOutline, checkmarkCircleOutline,
-  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline } from 'ionicons/icons';
+  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline, calculatorOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-validation',
   templateUrl: './validation.page.html',
   styleUrls: ['./validation.page.scss'],
   standalone: true,
-  imports: [IonBadge,IonTextarea,IonButton, IonModal, IonSelectOption, IonIcon, IonBackButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
+  imports: [IonBadge, IonTextarea, IonButton, IonModal, IonSelectOption, IonIcon, IonBackButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
 export class ValidationPage implements OnInit {
   demandeEnCours: any;
@@ -62,7 +62,7 @@ export class ValidationPage implements OnInit {
     private navCtrl: NavController
   ) {
 
-    addIcons({arrowBackOutline,searchOutline,checkmarkDoneCircleOutline,documentTextOutline,briefcaseOutline,calendarOutline,timeOutline,chatbubbleOutline,closeOutline,checkmarkOutline,alertCircleOutline,closeCircleOutline,checkmarkCircleOutline,informationCircleOutline});
+    addIcons({arrowBackOutline,searchOutline,checkmarkDoneCircleOutline,briefcaseOutline,calendarOutline,timeOutline,chatbubbleOutline,calculatorOutline,closeOutline,checkmarkOutline,alertCircleOutline,closeCircleOutline,documentTextOutline,checkmarkCircleOutline,informationCircleOutline});
   }
 
   async ngOnInit() {
@@ -195,19 +195,19 @@ export class ValidationPage implements OnInit {
     }
   }
 
-/*
-  approuver(d: any) {
-    
-    this.service.valider_conges(d.id, null).subscribe({
-      next: () => {
-        this.showToast('Demande approuvée !', 'success');
-        this.loadData();
-      },
-      error: (err: any) => this.showToast(err.error?.error || 'Erreur', 'error')
-    });
-  }
-*/
-    // ── Actions liste ─────────────────────────────────────────
+  /*
+    approuver(d: any) {
+      
+      this.service.valider_conges(d.id, null).subscribe({
+        next: () => {
+          this.showToast('Demande approuvée !', 'success');
+          this.loadData();
+        },
+        error: (err: any) => this.showToast(err.error?.error || 'Erreur', 'error')
+      });
+    }
+  */
+  // ── Actions liste ─────────────────────────────────────────
   async approuver(d: any): Promise<void> {
     const data_ = localStorage.getItem('utilisateur');
     if (data_) {
@@ -332,6 +332,13 @@ export class ValidationPage implements OnInit {
     return nom ? nom.charAt(0).toUpperCase() : '?';
   }
 
+  isAjustement(d: any): boolean {
+    return d?.motif?.startsWith('[AJUSTEMENT MANUEL]');
+  }
+
+  getAjustementTexte(d: any): string {
+    return d?.motif?.replace('[AJUSTEMENT MANUEL]', '').trim() || 'Ajustement de solde';
+  }
 
 
 }

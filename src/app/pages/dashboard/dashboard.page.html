@@ -68,7 +68,7 @@
         </div>
         <span>Mes<br>absences</span>
       </div>
-<!--
+      <!--
       <div class="action-card amber">
         <div class="action-icon-wrap">
           <ion-icon name="document-text-outline"></ion-icon>
@@ -94,20 +94,37 @@
 
     <!-- ACTIVITÉ RÉCENTE -->
     <p class="section-title">Activité récente</p>
-    <div class="activity-list">
-      <div class="activity-item" *ngFor="let hist of historiques">
-        <div class="activity-icon" [ngClass]="getStatutClass(hist.statut)">
-          <ion-icon [name]="getStatutIcon(hist.statut)"></ion-icon>
+    <div class="activity-list scrollable">
+      <ng-container *ngFor="let hist of historiques | slice:0:3">
+
+        <!-- AJUSTEMENT MANUEL -->
+        <div class="activity-item ajustement" *ngIf="isAjustement(hist)">
+          <div class="activity-icon ajust-icon">
+            <ion-icon name="calculator-outline"></ion-icon>
+          </div>
+          <div class="activity-text">
+            <h4>⚙️ Ajustement de solde</h4>
+            <p>{{ getAjustementTexte(hist) }}</p>
+          </div>
+          <span class="status-pill pill-ajust">Manuel</span>
         </div>
-        <div class="activity-text">
-          <h4>Demande de congé</h4>
-          <p>{{ hist.date_debut | date:'dd MMM' }} — {{ hist.date_fin | date:'dd MMM yyyy' }}
-            &nbsp;·&nbsp; <strong>{{ hist.nb_jours }} j</strong></p>
+
+        <!-- CONGÉ NORMAL -->
+        <div class="activity-item" *ngIf="!isAjustement(hist)">
+          <div class="activity-icon" [ngClass]="getStatutClass(hist.statut)">
+            <ion-icon [name]="getStatutIcon(hist.statut)"></ion-icon>
+          </div>
+          <div class="activity-text">
+            <h4>Demande de congé</h4>
+            <p>{{ hist.date_debut | date:'dd MMM' }} — {{ hist.date_fin | date:'dd MMM yyyy' }}
+              &nbsp;·&nbsp; <strong>{{ hist.nb_jours }} j</strong></p>
+          </div>
+          <span class="status-pill" [ngClass]="'pill-' + getStatutClass(hist.statut)">
+            {{ getStatutLabel(hist.statut) }}
+          </span>
         </div>
-        <span class="status-pill" [ngClass]="'pill-' + getStatutClass(hist.statut)">
-          {{ getStatutLabel(hist.statut) }}
-        </span>
-      </div>
+
+      </ng-container>
 
       <div class="empty-state" *ngIf="!historiques?.length">
         <ion-icon name="receipt-outline"></ion-icon>
@@ -124,27 +141,48 @@
   </div>
 
   <!-- POPOVER NOTIFICATIONS -->
-  <ion-popover trigger="open-notif" triggerAction="click" [dismissOnSelect]="true">
-    <ng-template>
-      <div class="notif-header">
-        <span>Notifications</span>
-      </div>
+<ion-popover trigger="open-notif" triggerAction="click" [dismissOnSelect]="true">
+  <ng-template>
+    <div class="notif-header">
+      <span>Notifications</span>
+      <ion-note>{{ historiques?.length }} au total</ion-note>
+    </div>
+    <div class="notif-scroll">
       <ion-list lines="full">
-        <ion-item *ngFor="let hist of historiques" [button]="true">
-          <ion-icon slot="start" name="time" [color]="getStatutColor(hist.statut)"></ion-icon>
-          <ion-label>
-            <div class="notif-row">
-              <h3>Demande de Congé</h3>
-              <ion-note color="medium">{{ hist.nb_jours }} jrs</ion-note>
-            </div>
-            <p>Du {{ hist.date_debut | date:'dd/MM/yy' }} au {{ hist.date_fin | date:'dd/MM/yy' }}</p>
-            <p [style.color]="'var(--ion-color-' + getStatutColor(hist.statut) + ')'">
-              {{ hist.statut | titlecase }}
-            </p>
-          </ion-label>
+        <ion-item *ngFor="let hist of historiques | slice:0:3" [button]="true">
+
+          <!-- AJUSTEMENT -->
+          <ng-container *ngIf="isAjustement(hist)">
+            <ion-icon slot="start" name="calculator-outline" color="warning"></ion-icon>
+            <ion-label>
+              <div class="notif-row">
+                <h3>⚙️ Ajustement manuel</h3>
+                <ion-note color="warning">Solde</ion-note>
+              </div>
+              <p>{{ getAjustementTexte(hist) }}</p>
+              <p style="color: var(--ion-color-warning)">Ajustement de solde</p>
+            </ion-label>
+          </ng-container>
+
+          <!-- CONGÉ NORMAL -->
+          <ng-container *ngIf="!isAjustement(hist)">
+            <ion-icon slot="start" name="time" [color]="getStatutColor(hist.statut)"></ion-icon>
+            <ion-label>
+              <div class="notif-row">
+                <h3>Demande de Congé</h3>
+                <ion-note color="medium">{{ hist.nb_jours }} jrs</ion-note>
+              </div>
+              <p>Du {{ hist.date_debut | date:'dd/MM/yy' }} au {{ hist.date_fin | date:'dd/MM/yy' }}</p>
+              <p [style.color]="'var(--ion-color-' + getStatutColor(hist.statut) + ')'">
+                {{ hist.statut | titlecase }}
+              </p>
+            </ion-label>
+          </ng-container>
+
         </ion-item>
       </ion-list>
-    </ng-template>
-  </ion-popover>
+    </div>
+  </ng-template>
+</ion-popover>
 
 </ion-content>

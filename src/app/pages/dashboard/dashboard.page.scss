@@ -34,6 +34,8 @@ ion-toolbar {
   }
 }
 
+
+
 .header-inner {
   padding: 16px 20px 36px;
   position: relative;
@@ -45,6 +47,26 @@ ion-toolbar {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+}
+
+
+// ─── AJUSTEMENT MANUEL ───────────────────────────────────────
+.activity-item.ajustement {
+  background: rgba(234, 179, 8, 0.06);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: 12px;
+  border-left: 3px solid #eab308;
+}
+
+.ajust-icon {
+  background: rgba(234, 179, 8, 0.15) !important;
+  color: #eab308 !important;
+}
+
+.pill-ajust {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
 .brand {
@@ -424,4 +446,58 @@ ion-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+// ─── SCROLL ACTIVITÉ ─────────────────────────────────────────
+.activity-list.scrollable {
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+}
+
+// ─── SCROLL POPOVER NOTIFS ───────────────────────────────────
+.notif-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+  }
+}
+
+// ─── AJUSTEMENT MANUEL ───────────────────────────────────────
+.activity-item.ajustement {
+  background: rgba(234, 179, 8, 0.06);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: 12px;
+  border-left: 3px solid #eab308;
+}
+
+.ajust-icon {
+  background: rgba(234, 179, 8, 0.15) !important;
+  color: #eab308 !important;
+}
+
+.pill-ajust {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
 }
