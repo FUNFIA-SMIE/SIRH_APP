@@ -37,7 +37,7 @@ export class LoginPage {
   isLoading: boolean = false;
   showPassword: boolean = false;
   errorMessage: string = ''; // <--- Add this line
-  private apiUrl = 'http://localhost:3000';
+  private apiUrl = 'http://192.168.88.46:3000';
 
   constructor(
     private navCtrl: NavController,
