@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
-import { NavController, Platform } from '@ionic/angular';
+import { Platform } from '@ionic/angular';
 import { io, Socket } from 'socket.io-client';
 
 @Injectable({ providedIn: 'root' })
@@ -8,69 +8,80 @@ export class NotificationService {
   private socket!: Socket;
   private serverUrl = 'http://192.168.1.xxx:3000';
   private permissionGranted = false;
+  private channelCreated = false;
 
-  constructor(
-    private navCtrl: NavController,
-    private platform: Platform
-  ) {}
+  constructor(private platform: Platform) {}
 
-  // ─── INIT ────────────────────────────────────────────────────
-  async init() {
+  // ─── INIT ─────────────────────────────────────────────────────
+  async init(): Promise<void> {
     await this.platform.ready();
     await this.requestPermissions();
-    await this.createChannel();
-  }
-
-  // ─── PERMISSIONS ─────────────────────────────────────────────
-  async requestPermissions() {
-    try {
-      const { display } = await LocalNotifications.requestPermissions();
-      this.permissionGranted = display === 'granted';
-      console.log('Permission notifications:', display);
-    } catch (e) {
-      console.error('Erreur permission:', e);
+    if (!this.channelCreated) {
+      await this.createChannel();
     }
   }
 
-  // ─── CANAL ANDROID (obligatoire Android 8+) ──────────────────
-  async createChannel() {
+  // ─── PERMISSIONS ──────────────────────────────────────────────
+  async requestPermissions(): Promise<void> {
+    try {
+      const result = await LocalNotifications.requestPermissions();
+      this.permissionGranted = result.display === 'granted';
+      console.log('Permission notifications:', result.display);
+    } catch (e) {
+      console.error('Erreur permission:', e);
+      this.permissionGranted = false;
+    }
+  }
+
+  // ─── CANAL ANDROID (obligatoire Android 8+) ───────────────────
+  async createChannel(): Promise<void> {
     try {
       await LocalNotifications.createChannel({
         id: 'sirh_channel',
         name: 'SIRH Notifications',
         description: 'Notifications congés SIRH',
-        importance: 5,        // IMPORTANCE_HIGH
-        visibility: 1,        // PUBLIC
+        importance: 5,
+        visibility: 1,
         sound: 'default',
         vibration: true,
         lights: true,
         lightColor: '#3b82f6',
       });
+      this.channelCreated = true;
       console.log('✅ Canal créé');
     } catch (e) {
       console.error('Erreur création canal:', e);
     }
   }
 
-  // ─── NOTIFICATION LOCALE ─────────────────────────────────────
-  async showLocalNotification(title: string, body: string) {
+  // ─── NOTIFICATION LOCALE ──────────────────────────────────────
+  async showLocalNotification(title: string, body: string): Promise<void> {
     if (!this.permissionGranted) {
       await this.requestPermissions();
+      if (!this.permissionGranted) {
+        console.warn('Notification ignorée : permission refusée');
+        return;
+      }
+    }
+
+    if (!this.channelCreated) {
+      await this.createChannel();
     }
 
     try {
       const options: ScheduleOptions = {
         notifications: [{
-          id: Math.floor(Math.random() * 100000),
+          id: Math.floor(Math.random() * 2147483647), // int32 max safe
           title,
           body,
-          channelId: 'sirh_channel',   // ← canal Android
-          sound: 'default',
-          smallIcon: 'res://ic_stat_icon_config_grey',
+          channelId: 'sirh_channel',
+          // ✅ Icône standard Capacitor — fonctionne sans ressource custom
+          smallIcon: 'ic_stat_notify',
           iconColor: '#3b82f6',
           ongoing: false,
           autoCancel: true,
-          schedule: { at: new Date(Date.now() + 300) },
+          // ✅ Délai minimum 1s (Android ignore < 500ms)
+          schedule: { at: new Date(Date.now() + 1000) },
         }]
       };
       await LocalNotifications.schedule(options);
@@ -80,8 +91,8 @@ export class NotificationService {
     }
   }
 
-  // ─── SOCKET ──────────────────────────────────────────────────
-  connectSocket(employe_id: string, is_manager = false) {
+  // ─── SOCKET ───────────────────────────────────────────────────
+  connectSocket(employe_id: string, is_manager = false): void {
     if (this.socket?.connected) {
       this.socket.disconnect();
     }
@@ -111,16 +122,16 @@ export class NotificationService {
       this.showLocalNotification('Nouvelle demande de congé', data.message);
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', (reason: string) => {
       console.log('🔴 Socket déconnecté:', reason);
     });
 
-    this.socket.on('connect_error', (err) => {
+    this.socket.on('connect_error', (err: Error) => {
       console.error('❌ Erreur socket:', err.message);
     });
   }
 
-  disconnectSocket() {
+  disconnectSocket(): void {
     this.socket?.disconnect();
   }
 }

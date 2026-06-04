@@ -48,35 +48,22 @@ export class DashboardPage implements OnInit {
     return Math.min(100, Math.max(0, (s / 30) * 100));
   }
 
-  async ngOnInit(): Promise<void> {
-    const data = localStorage.getItem('utilisateur');
-    if (data) {
-      this.token = JSON.parse(data);
-      this.historiques = await this.srvc.getHistorique(
-        this.token.employe_id
-      ).toPromise() as any[];
-    }
-
-    this.solde_conges = await this.srvc.solde_conges_employe().toPromise() as any[];
-    this.solde_conges = this.solde_conges.filter(
-      (p: any) => p.employe_id === this.token.employe_id
-    );
-
-    await this.notifService.init();
-    await this.chargerDonnees();
-
-    // ─── Vérifier si l'utilisateur est manager ───────────────
-    const poste = await this.srvc.getPosteById(
-      this.token.poste_id
-    ).toPromise() as any;
-
-    const is_manager = [
-      'MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'
-    ].includes(poste?.intitule);
-
-    this.notifService.connectSocket(this.token.employe_id, is_manager);
+async ngOnInit(): Promise<void> {
+  const data = localStorage.getItem('utilisateur');
+  if (data) {
+    this.token = JSON.parse(data);
   }
 
+  // ✅ init() AVANT tout le reste
+  await this.notifService.init();
+  await this.chargerDonnees();
+
+  const poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
+  const is_manager = ['MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'].includes(poste?.intitule);
+
+  // ✅ connectSocket seulement après que init() soit terminé
+  this.notifService.connectSocket(this.token.employe_id, is_manager);
+}
   ngOnDestroy() {
     this.notifService.disconnectSocket();
   }
