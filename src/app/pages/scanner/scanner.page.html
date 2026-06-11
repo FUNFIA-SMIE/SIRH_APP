@@ -1,0 +1,168 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/qrcode" text=""></ion-back-button>
+    </ion-buttons>
+    <ion-title>Scanner QR Code</ion-title>
+    <ion-buttons slot="end" *ngIf="historiqueScan.length > 0">
+      <ion-button fill="clear" (click)="confirmerEffacerHistorique()">
+        <ion-icon slot="icon-only" name="trash-outline" color="medium"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Debug banner -->
+  <div *ngIf="lastDebug" class="debug-banner"
+       style="padding:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:12px;text-align:center;">
+    Debug: {{ lastDebug }}
+  </div>
+
+  <!-- ========== OVERLAY SCAN NATIF (Android/iOS) ========== -->
+  <div *ngIf="isScanning && estNatif" class="scan-overlay-ui">
+    <div class="scan-frame-container">
+      <div class="scan-frame">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="scan-line"></div>
+      </div>
+      <p class="scan-hint">Cadrez le QR code dans le carré</p>
+    </div>
+    <ion-button class="btn-annuler" expand="block" fill="solid" color="light" (click)="arreterScan()">
+      <ion-icon slot="start" name="close-outline"></ion-icon>
+      Annuler
+    </ion-button>
+  </div>
+
+  <!-- ========== CONTENU PRINCIPAL ========== -->
+  <div *ngIf="!(isScanning && estNatif)" class="scanner-content">
+
+    <!-- ── Scan web actif : flux caméra navigateur (ZXing) ── -->
+    <div *ngIf="isScanning && estWeb" class="web-scanner-card">
+      <div class="web-scanner-header">
+        <ion-icon name="scan-outline"></ion-icon>
+        <span>Pointez la caméra vers le QR Code</span>
+      </div>
+
+      <!-- ✅ <video> requis par @zxing/browser (remplace le div html5-qrcode) -->
+      <video id="qr-video"
+             class="qr-reader-container"
+             autoplay
+             playsinline
+             muted
+             style="width:100%; border-radius:12px; display:block; background:#000;">
+      </video>
+
+      <ion-button expand="block" fill="outline" class="btn-stop-web" (click)="arreterScan()">
+        <ion-icon slot="start" name="close-outline"></ion-icon>
+        Arrêter la caméra
+      </ion-button>
+    </div>
+
+    <!-- ── Carte action (aucun scan en cours) ── -->
+    <div class="scan-action-card" *ngIf="!isScanning && !resultatScan && !isLoading">
+      <div class="scan-illustration">
+        <div class="scan-rings">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+          <div class="ring ring-3"></div>
+        </div>
+        <div class="scan-icon-center">
+          <ion-icon name="qr-code-outline"></ion-icon>
+        </div>
+      </div>
+
+      <div class="scan-texte">
+        <h2>Scanner un QR Code</h2>
+        <p>Scannez le QR code d'un employé pour enregistrer son entrée ou sa sortie</p>
+      </div>
+
+      <div class="plateforme-badge">
+        <ion-icon [name]="estNatif ? 'phone-portrait-outline' : 'desktop-outline'"></ion-icon>
+        <span>{{ estNatif ? 'Caméra mobile (MLKit)' : 'Webcam navigateur (ZXing)' }}</span>
+      </div>
+
+      <ion-button expand="block" class="btn-scan" (click)="demarrerScan()">
+        <ion-icon slot="start" name="camera-outline"></ion-icon>
+        Lancer le scan
+      </ion-button>
+    </div>
+
+    <!-- ── Loader ── -->
+    <div *ngIf="isLoading" class="loading-card">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Enregistrement en cours...</p>
+    </div>
+
+    <!-- ── Résultat ── -->
+    <div *ngIf="resultatScan && !isLoading" class="resultat-card"
+         [class.entree]="resultatScan.type === 'entree'"
+         [class.sortie]="resultatScan.type === 'sortie'">
+
+      <div class="resultat-icone">
+        <ion-icon [name]="resultatScan.type === 'entree' ? 'log-in-outline' : 'log-out-outline'"></ion-icon>
+      </div>
+
+      <div class="resultat-badge">
+        {{ resultatScan.type === 'entree' ? 'ENTRÉE' : 'SORTIE' }}
+      </div>
+
+      <div class="resultat-employe" *ngIf="employeInfo">
+        <h3>{{ employeInfo.prenom }} {{ employeInfo.nom }}</h3>
+        <p *ngIf="employeInfo.poste">{{ employeInfo.poste }}</p>
+      </div>
+
+      <div class="resultat-horodatage">
+        <ion-icon name="time-outline"></ion-icon>
+        {{ formatDate(resultatScan.date_heure) }}
+      </div>
+
+      <ion-button expand="block" class="btn-nouveau-scan" fill="outline"
+                  (click)="reinitialiser(); demarrerScan()">
+        <ion-icon slot="start" name="camera-outline"></ion-icon>
+        Scanner un autre
+      </ion-button>
+    </div>
+
+    <!-- ── Erreur ── -->
+    <div *ngIf="erreur && !isLoading" class="erreur-card">
+      <ion-icon name="close-circle-outline"></ion-icon>
+      <p>{{ erreur }}</p>
+      <ion-button fill="outline" (click)="reinitialiser(); demarrerScan()">
+        Réessayer
+      </ion-button>
+    </div>
+
+    <!-- ── Historique récent ── -->
+    <div class="historique-recent"
+         *ngIf="historiqueScan.length > 0 && !resultatScan && !isLoading && !isScanning">
+      <div class="section-titre">
+        <ion-icon name="time-outline"></ion-icon>
+        <span>Scans récents</span>
+      </div>
+
+      <ion-list class="scan-list">
+        <ion-item *ngFor="let scan of historiqueScan.slice(0, 8)" lines="none" class="scan-item">
+          <div slot="start" class="mini-icone"
+               [class.entree]="scan.type === 'entree'"
+               [class.sortie]="scan.type === 'sortie'">
+            <ion-icon [name]="scan.type === 'entree' ? 'log-in-outline' : 'log-out-outline'"></ion-icon>
+          </div>
+          <ion-label>
+            <h3>{{ scan.employe_id | slice:0:8 }}...</h3>
+            <p>{{ formatDate(scan.date_heure) }}</p>
+          </ion-label>
+          <ion-badge slot="end" [color]="scan.type === 'entree' ? 'success' : 'warning'">
+            {{ scan.type === 'entree' ? 'IN' : 'OUT' }}
+          </ion-badge>
+        </ion-item>
+      </ion-list>
+    </div>
+
+  </div>
+
+</ion-content>

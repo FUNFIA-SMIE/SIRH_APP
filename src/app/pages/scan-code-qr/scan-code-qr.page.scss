@@ -1,0 +1,357 @@
+// ─── HEADER ──────────────────────────────────────────────────
+ion-header.ion-no-border::after { display: none; }
+
+ion-toolbar {
+  --background: linear-gradient(145deg, #0f2847 0%, #1a3f72 100%);
+  --border-width: 0;
+}
+
+ion-toolbar:last-child {
+  --background: linear-gradient(145deg, #0f2847 0%, #1a3f72 100%);
+  padding-bottom: 12px;
+}
+
+ion-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+ion-buttons ion-button {
+  --color: #7aa3c8;
+}
+
+// ─── SEGMENT ─────────────────────────────────────────────────
+ion-segment {
+  --background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  margin: 0 16px 4px;
+}
+
+ion-segment-button {
+  --color: rgba(255,255,255,0.5);
+  --color-checked: #fff;
+  --indicator-color: rgba(255,255,255,0.18);
+  --border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+// ─── CONTENT ─────────────────────────────────────────────────
+ion-content {
+  --background: #f0f4f8;
+}
+
+// ─── QR SECTION ──────────────────────────────────────────────
+.qr-section {
+  padding: 16px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+// ─── CARTE EMPLOYÉ ───────────────────────────────────────────
+.employe-card {
+  background: linear-gradient(145deg, #0f2847, #1a3f72);
+  border-radius: 20px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 20px rgba(15, 40, 71, 0.25);
+
+  .employe-avatar {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
+
+    ion-icon {
+      font-size: 48px;
+      color: rgba(255,255,255,0.6);
+    }
+  }
+
+  .employe-info {
+    h2 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    ion-badge {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-transform: uppercase;
+    }
+  }
+}
+
+// ─── HEURES ──────────────────────────────────────────────────
+.heures-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 12px rgba(15, 40, 71, 0.07);
+
+  .heures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    .heures-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+    }
+
+    .heures-valeur {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f2847;
+    }
+  }
+
+  .progress-bar-container {
+    height: 7px;
+    background: #e8edf5;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1a3f72, #60a5fa);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+
+      &.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+      &.danger  { background: linear-gradient(90deg, #dc2626, #f87171); }
+    }
+  }
+
+  .heures-restantes {
+    margin: 0;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    ion-icon { font-size: 13px; color: #60a5fa; }
+  }
+}
+
+// ─── QR CARD ─────────────────────────────────────────────────
+.qr-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 22px 18px;
+  box-shadow: 0 2px 12px rgba(15, 40, 71, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+
+  .qr-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #1a3f72;
+
+    ion-icon { font-size: 16px; color: #34d399; }
+  }
+
+  .qr-wrapper {
+    padding: 10px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1.5px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(15, 40, 71, 0.08);
+  }
+
+  .timer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+
+    .timer-ring {
+      position: relative;
+      width: 56px;
+      height: 56px;
+
+      svg {
+        width: 100%;
+        height: 100%;
+
+        circle { transition: stroke-dashoffset 1s linear; }
+      }
+
+      .timer-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 10px;
+        font-weight: 800;
+        color: #0f2847;
+      }
+    }
+
+    .timer-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      ion-icon { font-size: 13px; color: #60a5fa; }
+    }
+  }
+
+  .qr-instruction {
+    margin: 0;
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
+    line-height: 1.5;
+    padding: 0 8px;
+  }
+}
+
+// ─── HISTORIQUE SECTION ──────────────────────────────────────
+.historique-section {
+  padding: 16px 14px 28px;
+}
+
+.historique-resume {
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 12px rgba(15, 40, 71, 0.07);
+
+  .resume-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+
+    .resume-chiffre {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f2847;
+    }
+
+    .resume-libelle {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+    }
+  }
+
+  .resume-divider {
+    width: 1px;
+    height: 32px;
+    background: rgba(255,255,255,0.1);
+    background: #e2e8f0;
+  }
+}
+
+.pointage-list {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  ion-item-group {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(15, 40, 71, 0.07);
+  }
+
+  .pointage-item {
+    --background: #fff;
+    --padding-start: 14px;
+    --padding-end: 14px;
+    --inner-padding-end: 0;
+    --min-height: 68px;
+
+    .pointage-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+
+      ion-icon { font-size: 20px; color: #fff; }
+
+      &.entree { background: linear-gradient(135deg, #059669, #10b981); }
+      &.sortie { background: linear-gradient(135deg, #d97706, #f59e0b); }
+    }
+
+    ion-label {
+      h3 {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #1e293b;
+        margin-bottom: 2px;
+      }
+      p { font-size: 0.75rem; color: #94a3b8; }
+    }
+
+    ion-badge {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+// ─── LOADING / EMPTY ─────────────────────────────────────────
+.loading-container, .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #cbd5e1;
+  gap: 12px;
+
+  ion-icon { font-size: 48px; display: block; margin: 0 auto 4px; }
+  p { font-size: 13px; margin: 0; }
+}

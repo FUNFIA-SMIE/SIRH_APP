@@ -1,0 +1,154 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>Disponibilité</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" routerLink="/scanner">
+        <ion-icon slot="icon-only" name="qr-code-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-segment [value]="segmentValue" (ionChange)="segmentChanged($event)">
+      <ion-segment-button value="qrcode">
+        <ion-label>Mon QR Code</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="historique">
+        <ion-label>Historique</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- ========== PAGE QR CODE ========== -->
+  <div *ngIf="segmentValue === 'qrcode'" class="qr-section">
+
+    <!-- Carte employé -->
+    <div class="employe-card" *ngIf="utilisateur">
+      <div class="employe-avatar">
+        <img *ngIf="utilisateur.photo_url; else defaultAvatar"
+             [src]="utilisateur.photo_url"
+             alt="Avatar">
+        <ng-template #defaultAvatar>
+          <ion-icon name="person-circle-outline"></ion-icon>
+        </ng-template>
+      </div>
+      <div class="employe-info">
+        <h2>{{ utilisateur.nom }} {{utilisateur.prenom}}</h2>
+        <h2 *ngIf="poste" class="font-italic">- {{ poste.intitule }} -</h2>
+        <ion-badge [color]="utilisateur.est_actif ? 'success' : 'medium'">
+          {{ utilisateur.identifiant}}
+        </ion-badge>
+      </div>
+    </div>
+
+    <!-- Jauge heures mensuelles -->
+    <div class="heures-card">
+      <div class="heures-header">
+        <span class="heures-label">Heures ce mois</span>
+        <span class="heures-valeur">
+          {{ heuresUtilisees | number:'1.1-1' }}h / {{ HEURES_MAX_MOIS }}h
+        </span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" [style.width.%]="pourcentageHeures" [class.warning]="pourcentageHeures >= 75"
+          [class.danger]="pourcentageHeures >= 100">
+        </div>
+      </div>
+      <p class="heures-restantes">
+        <ion-icon name="time-outline"></ion-icon>
+        {{ (HEURES_MAX_MOIS - heuresUtilisees) | number:'1.1-1' }}h restantes ce mois
+      </p>
+    </div>
+
+    <!-- QR Code -->
+    <div class="qr-card">
+      <div class="qr-header">
+        <ion-icon name="shield-checkmark-outline" color="primary"></ion-icon>
+        <span>QR Code sécurisé</span>
+      </div>
+
+      <div class="qr-wrapper" *ngIf="qrData">
+        <qrcode [qrdata]="qrData" [width]="220" [errorCorrectionLevel]="'M'" [colorDark]="'#1a2540'"
+          [colorLight]="'#ffffff'">
+        </qrcode>
+      </div>
+
+      <!-- Timer de renouvellement -->
+      <div class="timer-container">
+        <div class="timer-ring">
+          <svg viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="26" fill="none" stroke="#e8eaf0" stroke-width="4" />
+            <circle cx="30" cy="30" r="26" fill="none" stroke="#4f7cff" stroke-width="4" stroke-dasharray="163.4"
+              [attr.stroke-dashoffset]="163.4 * (1 - tempsRestant / 900)" stroke-linecap="round"
+              transform="rotate(-90 30 30)" />
+          </svg>
+          <span class="timer-text">
+            {{ minutesRestantes | number:'2.0-0' }}:{{ secondesRestantes | number:'2.0-0' }}
+          </span>
+        </div>
+        <div class="timer-label">
+          <ion-icon name="refresh-outline"></ion-icon>
+          Renouvellement dans {{ minutesRestantes }}min {{ secondesRestantes }}s
+        </div>
+      </div>
+
+      <p class="qr-instruction">
+        Présentez ce QR code au responsable pour pointer votre entrée ou sortie
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ========== PAGE HISTORIQUE ========== -->
+  <div *ngIf="segmentValue === 'historique'" class="historique-section">
+
+    <div class="historique-resume">
+      <div class="resume-item">
+        <span class="resume-chiffre">{{ nbEntrees }}</span>
+        <span class="resume-libelle">Entrées</span>
+      </div>
+      <div class="resume-divider"></div>
+      <div class="resume-item">
+        <span class="resume-chiffre">{{ nbSorties }}</span>
+        <span class="resume-libelle">Sorties</span>
+      </div>
+      <div class="resume-divider"></div>
+      <div class="resume-item">
+        <span class="resume-chiffre">{{ heuresUtilisees | number:'1.1-1' }}h</span>
+        <span class="resume-libelle">Total</span>
+      </div>
+    </div>
+
+    <ion-list *ngIf="!isLoading" class="pointage-list">
+      <ion-item-group *ngFor="let pointage of pointages">
+        <ion-item class="pointage-item" lines="none">
+          <div slot="start" class="pointage-icon" [class.entree]="pointage.type === 'entree'"
+            [class.sortie]="pointage.type === 'sortie'">
+            <ion-icon [name]="pointage.type === 'entree' ? 'log-in-outline' : 'log-out-outline'"></ion-icon>
+          </div>
+          <ion-label>
+            <h3>{{ pointage.type === 'entree' ? 'Entrée' : 'Sortie' }}</h3>
+            <p>{{ formatDate(pointage.date_heure) }}</p>
+          </ion-label>
+          <ion-badge slot="end" [color]="pointage.type === 'entree' ? 'success' : 'warning'">
+            {{ pointage.type === 'entree' ? 'ENTREE' : 'SORTIE' }}
+          </ion-badge>
+        </ion-item>
+      </ion-item-group>
+    </ion-list>
+
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Chargement...</p>
+    </div>
+
+    <div *ngIf="!isLoading && pointages.length === 0" class="empty-state">
+      <ion-icon name="calendar-outline"></ion-icon>
+      <p>Aucun pointage ce mois</p>
+    </div>
+
+  </div>
+
+</ion-content>

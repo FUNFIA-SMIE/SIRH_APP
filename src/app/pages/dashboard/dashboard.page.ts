@@ -5,7 +5,7 @@ import { addIcons } from 'ionicons';
 import {
   notificationsOutline, addCircleOutline, calendarOutline,
   documentTextOutline, personOutline, checkmarkCircle, time,
-  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline
+  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline,gridOutline
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
 import { Subscription, interval } from 'rxjs';
@@ -26,6 +26,7 @@ export class DashboardPage implements OnInit {
   solde_conges: any;
   private pollingSubscription?: Subscription;
   private dernierStatuts: Map<number, string> = new Map();
+  status: boolean=false;
 
   constructor(
     private navCtrl: NavController,
@@ -35,7 +36,7 @@ export class DashboardPage implements OnInit {
     addIcons({
       notificationsOutline, addCircleOutline, calendarOutline,
       documentTextOutline, personOutline, checkmarkCircle, time,
-      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline
+      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline,gridOutline
     });
   }
 
@@ -48,22 +49,37 @@ export class DashboardPage implements OnInit {
     return Math.min(100, Math.max(0, (s / 30) * 100));
   }
 
-async ngOnInit(): Promise<void> {
-  const data = localStorage.getItem('utilisateur');
-  if (data) {
-    this.token = JSON.parse(data);
+  async ngOnInit(): Promise<void> {
+    const data = localStorage.getItem('utilisateur');
+    if (data) {
+      this.token = JSON.parse(data);
+      const poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
+
+      if (poste.intitule === 'Directeur Exécutif') {
+        this.status = true;      // ← filterStatut, pas searchQuery
+      } else if (poste.intitule === 'MEDECIN CHEF' || poste.intitule === 'MAJOR') {
+        this.status = true;
+      }
+
+
+
+    }
+
+    console.log("this.data", this.token)
+
+
+
+
+    // ✅ init() AVANT tout le reste
+    await this.notifService.init();
+    await this.chargerDonnees();
+
+    const poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
+    const is_manager = ['MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'].includes(poste?.intitule);
+
+    // ✅ connectSocket seulement après que init() soit terminé
+    this.notifService.connectSocket(this.token.employe_id, is_manager);
   }
-
-  // ✅ init() AVANT tout le reste
-  await this.notifService.init();
-  await this.chargerDonnees();
-
-  const poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
-  const is_manager = ['MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'].includes(poste?.intitule);
-
-  // ✅ connectSocket seulement après que init() soit terminé
-  this.notifService.connectSocket(this.token.employe_id, is_manager);
-}
   ngOnDestroy() {
     this.notifService.disconnectSocket();
   }
@@ -131,6 +147,8 @@ async ngOnInit(): Promise<void> {
   navAbsences() { this.navCtrl.navigateForward('/mes-absences'); }
   navProfil() { this.navCtrl.navigateForward('/profils'); }
   navValidation() { this.navCtrl.navigateForward('/validation'); }
+  NavSCAN(){this.navCtrl.navigateForward('/scan-code-qr');}
+  NavSCAN_QR(){this.navCtrl.navigateForward('/scanner');}
 
   logout() {
     localStorage.removeItem('utilisateur');

@@ -35,4 +35,12 @@ export const routes: Routes = [
     path: 'mes-absences',
     loadComponent: () => import('./pages/mes-absences/mes-absences.page').then( m => m.MesAbsencesPage)
   },
+  {
+    path: 'scan-code-qr',
+    loadComponent: () => import('./pages/scan-code-qr/scan-code-qr.page').then( m => m.ScanCodeQRPage)
+  },
+  {
+    path: 'scanner',
+    loadComponent: () => import('./pages/scanner/scanner.page').then( m => m.ScannerPage)
+  },
 ];

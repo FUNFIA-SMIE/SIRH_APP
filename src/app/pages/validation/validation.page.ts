@@ -9,7 +9,8 @@ import {
   arrowBackOutline, searchOutline, briefcaseOutline, calendarOutline,
   timeOutline, chatbubbleOutline, closeOutline, checkmarkOutline,
   alertCircleOutline, closeCircleOutline, checkmarkCircleOutline,
-  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline, calculatorOutline } from 'ionicons/icons';
+  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline, calculatorOutline
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-validation',
@@ -62,7 +63,7 @@ export class ValidationPage implements OnInit {
     private navCtrl: NavController
   ) {
 
-    addIcons({arrowBackOutline,searchOutline,checkmarkDoneCircleOutline,briefcaseOutline,calendarOutline,timeOutline,chatbubbleOutline,calculatorOutline,closeOutline,checkmarkOutline,alertCircleOutline,closeCircleOutline,documentTextOutline,checkmarkCircleOutline,informationCircleOutline});
+    addIcons({ arrowBackOutline, searchOutline, checkmarkDoneCircleOutline, briefcaseOutline, calendarOutline, timeOutline, chatbubbleOutline, calculatorOutline, closeOutline, checkmarkOutline, alertCircleOutline, closeCircleOutline, documentTextOutline, checkmarkCircleOutline, informationCircleOutline });
   }
 
   async ngOnInit() {
@@ -133,28 +134,77 @@ export class ValidationPage implements OnInit {
     this.motifRefusError = false;
   }
 
-  confirmerRefus() {
+  async confirmerRefus() {
+
+    const data_ = localStorage.getItem('utilisateur');
+    if (data_) {
+      this.token = JSON.parse(data_);
+      console.log(this.token.poste_id);
+    }
+
     if (!this.motifRefus || !this.motifRefus.trim()) {
       this.motifRefusError = true;
       return;
     }
     if (this.demandeEnCours) {
-      this.service.valider_conges({
-        id: this.demandeEnCours.id,
-        statut: 'refuse',
-        commentaire: this.motifRefus.trim()
-      }).subscribe({
-        next: () => {
-          this.showToast('Demande refusée', 'error');
-          this.loadData();
-          this.closeModal();
-        },
-        error: (err: any) => this.showToast(err.error?.error || 'Erreur', 'error')
-      });
+      const departement = await this.service.getDepartmentById(this.demandeEnCours.departement_id).toPromise() as any;
+      const poste = await this.service.getPosteById(this.token.poste_id).toPromise() as any;
+      console.log('Département pour la demande', departement);
+      console.log('Poste pour la demande', poste);
+
+      if (departement.code === 'PARAMED' || departement.code === 'MED') {
+
+        if (this.demandeEnCours.statut === 'en_attente_manager') {
+          // Bloquer si l'utilisateur n'est pas le responsable du département
+          if (departement.responsable_id !== this.token.employe_id) {
+            alert("La demande n'est pas encore approuvée par son manager.");
+            return;
+          }
+          // Bloquer si c'est le Directeur Exécutif (ne gère pas cette étape)
+          if (poste.intitule === 'Directeur Exécutif') {
+            alert("La demande n'est pas encore approuvée par son manager.");
+            return;
+          }
+          // ✅ Passe à l'étape suivante
+          this.refuser_demande();
+          return; // 🔴 IMPORTANT : évite de tomber dans le this.approuver_demande final
+        }
+
+        if (this.demandeEnCours.statut === 'en_attente_rh') {
+          // Bloquer si ce n'est PAS le Directeur Exécutif
+          if (poste.intitule !== 'Directeur Exécutif') {
+            alert("La demande doit être approuvée par le Directeur Exécutif.");
+            return;
+          }
+          // ✅ Approbation finale (corrigé : 'approuve' au lieu de 'en_attente_rh')
+          this.refuser_demande()
+          return; // 🔴 IMPORTANT
+        }
+
+        // Statut non géré dans MED/PARAMED
+        return;
+      }
+
+      this.refuser_demande();
+
     }
   }
 
 
+  private refuser_demande() {
+    this.service.valider_conges({
+      id: this.demandeEnCours.id,
+      statut: 'refuse',
+      commentaire: this.motifRefus.trim()
+    }).subscribe({
+      next: () => {
+        this.showToast('Demande refusée', 'error');
+        this.loadData();
+        this.closeModal();
+      },
+      error: (err: any) => this.showToast(err.error?.error || 'Erreur', 'error')
+    });
+  }
 
 
   showToast(message: string, type: 'success' | 'error') {
@@ -162,7 +212,10 @@ export class ValidationPage implements OnInit {
     setTimeout(() => this.notification = null, 3000);
   }
 
+  isLoading = false; // ← ajouter avec les autres propriétés
+
   async loadData(): Promise<void> {
+    this.isLoading = true;
     try {
       this.allDemandes = [];
       this.filtered = [];
@@ -192,6 +245,8 @@ export class ValidationPage implements OnInit {
       this.applyFilters();
     } catch (e) {
       console.error('Erreur loadData', e);
+    } finally {
+      this.isLoading = false; // ← INDISPENSABLE
     }
   }
 
@@ -221,6 +276,7 @@ export class ValidationPage implements OnInit {
     const poste = await this.service.getPosteById(this.token.poste_id).toPromise() as any;
     console.log('Département pour la demande', departement);
     console.log('Poste pour la demande', poste);
+
 
     if (departement.code === 'PARAMED' || departement.code === 'MED') {
 

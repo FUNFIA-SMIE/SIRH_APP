@@ -6,7 +6,8 @@ import {
   arrowBackOutline, searchOutline, briefcaseOutline, calendarOutline,
   timeOutline, chatbubbleOutline, closeOutline, checkmarkOutline,
   alertCircleOutline, closeCircleOutline, checkmarkCircleOutline,
-  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline, calculatorOutline } from 'ionicons/icons';
+  checkmarkDoneCircleOutline, informationCircleOutline, documentTextOutline, calculatorOutline
+} from 'ionicons/icons';
 import { NavController, IonTextarea } from '@ionic/angular/standalone';
 import { ServiceSirh } from 'src/app/services/service-sirh';
 import { addIcons } from 'ionicons';
@@ -21,13 +22,13 @@ import { addIcons } from 'ionicons';
 export class MesAbsencesPage implements OnInit {
   typesConge: any;
   notification: { message: string, type: 'success' | 'error' } | null = null;
-
+  isLoading = false;
   constructor(
     private navCtrl: NavController,
     private service: ServiceSirh
 
   ) {
-    addIcons({arrowBackOutline,searchOutline,checkmarkDoneCircleOutline,briefcaseOutline,calendarOutline,timeOutline,chatbubbleOutline,calculatorOutline,alertCircleOutline,documentTextOutline,closeOutline,checkmarkOutline,closeCircleOutline,checkmarkCircleOutline,informationCircleOutline});
+    addIcons({ arrowBackOutline, searchOutline, checkmarkDoneCircleOutline, briefcaseOutline, calendarOutline, timeOutline, chatbubbleOutline, calculatorOutline, alertCircleOutline, documentTextOutline, closeOutline, checkmarkOutline, closeCircleOutline, checkmarkCircleOutline, informationCircleOutline });
   }
 
   allDemandes: any[] = [];
@@ -59,48 +60,47 @@ export class MesAbsencesPage implements OnInit {
   }
 
 
-  async loadData(): Promise<void> {
-    try {
-      this.allDemandes = [];
-      this.filtered = [];
-      this.data_ = localStorage.getItem('utilisateur');
-      if (this.data_) {
-        this.token = JSON.parse(this.data_);
-      }
-
-
-      let rawDemandes = await this.service.getAllConges_liste().toPromise() || [];
-      console.log('Données brutes reçues = ', rawDemandes);
-      console.log('Token utilisateur = ', this.token.employe_id);
-      rawDemandes = rawDemandes.filter((d: any) => d.employe_id === this.token.employe_id);
-      console.log('Données après filtrage par employé_id = ', rawDemandes);
-
-      this.typesConge = await this.service.getTypes().toPromise() || [];
-
-      this.allDemandes = rawDemandes.map((d: any) => ({
-        ...d,
-        employe: {
-          nom: d.nom || '',
-          prenom: d.prenom || '',
-          matricule: d.matricule || '',
-          poste: d.poste || 'Collaborateur',
-          photo_url: d.photo_url || null,
-        },
-        typeConge: {
-          libelle: d.type_conge || '',
-          code: d.code_type || '',
-        },
-        dateDebut: new Date(d.date_debut),
-        dateFin: new Date(d.date_fin),
-        nbJours: Number(d.nb_jours) || 0,
-        commentaireRefus: d.commentaire_refus || null,
-      }));
-
-      this.applyFilters();
-    } catch (e) {
-      console.error('Erreur loadData', e);
+async loadData(): Promise<void> {
+  this.isLoading = true;
+  try {
+    this.allDemandes = [];
+    this.filtered = [];
+    this.data_ = localStorage.getItem('utilisateur');
+    if (this.data_) {
+      this.token = JSON.parse(this.data_);
     }
+
+    let rawDemandes = await this.service.getAllConges_liste().toPromise() || [];
+    rawDemandes = rawDemandes.filter((d: any) => d.employe_id === this.token.employe_id);
+
+    this.typesConge = await this.service.getTypes().toPromise() || [];
+
+    this.allDemandes = rawDemandes.map((d: any) => ({
+      ...d,
+      employe: {
+        nom: d.nom || '',
+        prenom: d.prenom || '',
+        matricule: d.matricule || '',
+        poste: d.poste || 'Collaborateur',
+        photo_url: d.photo_url || null,
+      },
+      typeConge: {
+        libelle: d.type_conge || '',
+        code: d.code_type || '',
+      },
+      dateDebut: new Date(d.date_debut),
+      dateFin: new Date(d.date_fin),
+      nbJours: Number(d.nb_jours) || 0,
+      commentaireRefus: d.commentaire_refus || null,
+    }));
+
+    this.applyFilters();
+  } catch (e) {
+    console.error('Erreur loadData', e);
+  } finally {
+    this.isLoading = false; // ← INDISPENSABLE
   }
+}
   data_: any;
   token: any;
   filterStatut = '';
