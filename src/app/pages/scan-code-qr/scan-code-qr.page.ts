@@ -93,6 +93,7 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
         this.pointages = data;
         this.heuresUtilisees = this.pointageService.calculerHeures(data);
         this.isLoading = false;
+        console.log("POintage",this.pointages)
       },
       error: () => {
         this.isLoading = false;

@@ -1,7 +1,7 @@
 <ion-header class="ion-no-border">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/qrcode" text=""></ion-back-button>
+      <ion-back-button defaultHref="/dashboard" text=""></ion-back-button>
     </ion-buttons>
     <ion-title>Scanner QR Code</ion-title>
     <ion-buttons slot="end" *ngIf="historiqueScan.length > 0">
@@ -120,9 +120,12 @@
         <ion-icon name="time-outline"></ion-icon>
         {{ formatDate(resultatScan.date_heure) }}
       </div>
+      <div *ngIf="resultatScan?.scannerName" class="resultat-scanner" style="font-size:12px;color:var(--ion-color-medium);margin-top:6px;">
+        Scanné par : {{ resultatScan.scannerName }}
+      </div>
 
       <ion-button expand="block" class="btn-nouveau-scan" fill="outline"
-                  (click)="reinitialiser(); demarrerScan()">
+                  (click)="reloadThenScan()">
         <ion-icon slot="start" name="camera-outline"></ion-icon>
         Scanner un autre
       </ion-button>
@@ -132,7 +135,7 @@
     <div *ngIf="erreur && !isLoading" class="erreur-card">
       <ion-icon name="close-circle-outline"></ion-icon>
       <p>{{ erreur }}</p>
-      <ion-button fill="outline" (click)="reinitialiser(); demarrerScan()">
+      <ion-button fill="outline" (click)="reloadThenScan()">
         Réessayer
       </ion-button>
     </div>
@@ -153,11 +156,11 @@
             <ion-icon [name]="scan.type === 'entree' ? 'log-in-outline' : 'log-out-outline'"></ion-icon>
           </div>
           <ion-label>
-            <h3>{{ scan.employe_id | slice:0:8 }}...</h3>
+            <h3>{{ (scan.displayName || scan.employe_id)}}</h3>
             <p>{{ formatDate(scan.date_heure) }}</p>
           </ion-label>
-          <ion-badge slot="end" [color]="scan.type === 'entree' ? 'success' : 'warning'">
-            {{ scan.type === 'entree' ? 'IN' : 'OUT' }}
+          <ion-badge slot="end" [color]=  "scan.type === 'entree' ? 'success' : 'warning'">
+            {{ scan.type === 'entree' ? 'ENTREE' : 'SORTIE' }}
           </ion-badge>
         </ion-item>
       </ion-list>

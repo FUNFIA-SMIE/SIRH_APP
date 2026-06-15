@@ -15,6 +15,8 @@ export interface Pointage {
   created_at?: string;
   nom?: string;
   prenom?: string;
+  displayName?: string;
+  scannerName?: string;
 }
 
 export interface EmployeInfo {
@@ -53,7 +55,8 @@ export class PointageServices {
 
   // ─── HEADERS ───────────────────────────────────────────────
   private get headers(): HttpHeaders {
-    const token = localStorage.getItem('token') || '';
+    const token = localStorage.getItem('token');
+    if (!token) return new HttpHeaders();
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
 
@@ -127,16 +130,30 @@ export class PointageServices {
 
   // ─── CALCULER HEURES LOCALEMENT ────────────────────────────
   calculerHeures(pointages: Pointage[]): number {
-    const entrees = pointages.filter(p => p.type === 'entree')
-      .sort((a, b) => new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime());
-    const sorties = pointages.filter(p => p.type === 'sortie')
-      .sort((a, b) => new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime());
+    if (!pointages || pointages.length === 0) return 0;
+
+    // Trier tous les événements par ordre chronologique croissant
+    const sorted = [...pointages].sort(
+      (a, b) => new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime()
+    );
 
     let totalMs = 0;
-    for (let i = 0; i < Math.min(entrees.length, sorties.length); i++) {
-      const diff = new Date(sorties[i].date_heure).getTime() - new Date(entrees[i].date_heure).getTime();
-      if (diff > 0) totalMs += diff;
+    let lastEntry: Pointage | null = null;
+
+    // Coupler chaque 'sortie' avec la dernière 'entree' non appariée précédente
+    for (const p of sorted) {
+      if (p.type === 'entree') {
+        lastEntry = p;
+      } else if (p.type === 'sortie') {
+        if (lastEntry) {
+          const diff = new Date(p.date_heure).getTime() - new Date(lastEntry.date_heure).getTime();
+          if (diff > 0) totalMs += diff;
+          lastEntry = null;
+        }
+        // sinon: sortie sans entrée précédente -> on ignore
+      }
     }
+
     return totalMs / (1000 * 3600);
   }
 }

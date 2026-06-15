@@ -203,7 +203,7 @@ export class ServiceSirh {
     return this.http.get(`${this.url}/employes/employes_utilisateurs/${id}`);
   }
 
-    getAllConges_liste(): Observable<any[]> {
+  getAllConges_liste(): Observable<any[]> {
     return this.http.get<any[]>(`${this.url}/conges`);
   }
 
