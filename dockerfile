@@ -7,8 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installer les dépendances
-RUN npm install -g @ionic/cli && npm install
-
+# À la ligne 10 de votre Dockerfile, remplacez par :
+RUN npm install -g @ionic/cli && npm install --legacy-peer-deps
 # Copier tout le code
 COPY . .
 
