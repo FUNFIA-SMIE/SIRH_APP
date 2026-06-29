@@ -7,9 +7,6 @@ import { interval, Subscription } from 'rxjs';
 import { PointageServices, Pointage, QrPayload } from '../../services/pointage-services';
 import { ServiceSirh } from 'src/app/services/service-sirh';
 
-
-
-
 @Component({
   selector: 'app-qrcode',
   templateUrl: './scan-code-qr.page.html',
@@ -17,7 +14,6 @@ import { ServiceSirh } from 'src/app/services/service-sirh';
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule, QRCodeComponent],
 })
-
 export class ScanCodeQRPage implements OnInit, OnDestroy {
 
   utilisateur: any | null = null;
@@ -34,31 +30,37 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
 
   constructor(
     private pointageService: PointageServices,
-    private service:ServiceSirh
-    ) { }
+    private service: ServiceSirh
+  ) {}
 
   async ngOnInit() {
     await this.chargerUtilisateur();
     this.demarrerTimer();
-    this.chargerPointages();
   }
 
   ngOnDestroy() {
     this.timerSub?.unsubscribe();
   }
 
-  // ─── UTILISATEUR ───────────────────────────────────────────
   async chargerUtilisateur() {
     const data = localStorage.getItem('utilisateur');
-    if (data) {
-      this.utilisateur = JSON.parse(data);
-      this.poste = await this.service.getPosteById(this.utilisateur.poste_id).toPromise() as any;
-
-      this.genererQrCode();
+    if (!data) {
+      console.error('Aucun utilisateur trouvé dans le localStorage');
+      return;
     }
+
+    this.utilisateur = JSON.parse(data);
+
+    try {
+      this.poste = await this.service.getPosteById(this.utilisateur.poste_id).toPromise();
+    } catch (err) {
+      console.error('Erreur lors de la récupération du poste:', err);
+    }
+
+    this.genererQrCode();
+    this.chargerPointages(); // ← déplacé ici, après que utilisateur est garanti défini
   }
 
-  // ─── QR CODE ───────────────────────────────────────────────
   genererQrCode() {
     if (!this.utilisateur) return;
     const payload: QrPayload = this.pointageService.genererQrPayload(
@@ -68,7 +70,6 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
     this.qrData = JSON.stringify(payload);
   }
 
-  // ─── TIMER 15 MIN ──────────────────────────────────────────
   demarrerTimer() {
     const now = Date.now();
     const debutFenetre = Math.floor(now / (15 * 60 * 1000)) * (15 * 60 * 1000);
@@ -83,7 +84,6 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
     });
   }
 
-  // ─── POINTAGES ─────────────────────────────────────────────
   chargerPointages() {
     if (!this.utilisateur) return;
     this.isLoading = true;
@@ -93,7 +93,7 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
         this.pointages = data;
         this.heuresUtilisees = this.pointageService.calculerHeures(data);
         this.isLoading = false;
-        console.log("POintage",this.pointages)
+        console.log('Pointages:', this.pointages);
       },
       error: () => {
         this.isLoading = false;
@@ -101,7 +101,6 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
     });
   }
 
-  // ─── GETTERS ───────────────────────────────────────────────
   get nbEntrees(): number { return this.pointages.filter(p => p.type === 'entree').length; }
   get nbSorties(): number { return this.pointages.filter(p => p.type === 'sortie').length; }
   get pourcentageHeures(): number { return Math.min((this.heuresUtilisees / this.HEURES_MAX_MOIS) * 100, 100); }

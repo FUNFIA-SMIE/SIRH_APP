@@ -129,31 +129,33 @@ export class PointageServices {
   }
 
   // ─── CALCULER HEURES LOCALEMENT ────────────────────────────
-  calculerHeures(pointages: Pointage[]): number {
-    if (!pointages || pointages.length === 0) return 0;
+calculerHeures(pointages: Pointage[]): number {
+  if (!pointages || pointages.length === 0) return 0;
 
-    // Trier tous les événements par ordre chronologique croissant
-    const sorted = [...pointages].sort(
-      (a, b) => new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime()
-    );
+  // Trier par ordre chronologique croissant (06:02 puis 06:08)
+  const sorted = [...pointages].sort(
+    (a, b) => new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime()
+  );
 
-    let totalMs = 0;
-    let lastEntry: Pointage | null = null;
+  let totalMs = 0;
+  let lastExit: Pointage | null = null; // On stocke la dernière SORTIE désormais
 
-    // Coupler chaque 'sortie' avec la dernière 'entree' non appariée précédente
-    for (const p of sorted) {
-      if (p.type === 'entree') {
-        lastEntry = p;
-      } else if (p.type === 'sortie') {
-        if (lastEntry) {
-          const diff = new Date(p.date_heure).getTime() - new Date(lastEntry.date_heure).getTime();
-          if (diff > 0) totalMs += diff;
-          lastEntry = null;
-        }
-        // sinon: sortie sans entrée précédente -> on ignore
+  // Coupler chaque 'entree' (retour) avec la 'sortie' précédente
+  for (const p of sorted) {
+    if (p.type === 'sortie') {
+      lastExit = p; // L'employé sort, on lance le chrono
+    } else if (p.type === 'entree') {
+      if (lastExit) {
+        // L'employé revient, on calcule le temps passé dehors
+        const diff = new Date(p.date_heure).getTime() - new Date(lastExit.date_heure).getTime();
+        if (diff > 0) totalMs += diff;
+        lastExit = null; // Reset pour la prochaine sortie
       }
     }
-
-    return totalMs / (1000 * 3600);
   }
+
+  console.log("Total MS passées dehors :", totalMs);
+
+  return totalMs / (1000 * 3600);
+}
 }

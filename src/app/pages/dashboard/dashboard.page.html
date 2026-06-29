@@ -97,7 +97,7 @@
         <span>Disposition</span>
       </div>
 
-      <div class="action-card indigo" (click)="NavSCAN_QR()">
+      <div *ngIf="status" class="action-card indigo" (click)="NavSCAN_QR()">
         <div class="action-icon-wrap">
           <ion-icon name="qr-code-outline"></ion-icon>
         </div>
