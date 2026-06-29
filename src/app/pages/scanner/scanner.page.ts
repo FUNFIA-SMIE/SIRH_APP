@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule, ToastController, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Capacitor } from '@capacitor/core';
-import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
+import { BarcodeScanner, GoogleBarcodeScannerModuleInstallState } from '@capacitor-mlkit/barcode-scanning';
 import { PointageServices, Pointage, EmployeInfo, QrPayload } from '../../services/pointage-services';
 
 // ── ZXing (import depuis @zxing/library, PAS @zxing/browser) ──
@@ -43,7 +43,7 @@ export class ScannerPage implements OnInit, OnDestroy {
   ignoreRaw: string | null = null;
   ignoreUntil: number | null = null;
   data_employe:any;
-  
+
   constructor(
     private pointageService: PointageServices,
     private toastCtrl: ToastController,
@@ -95,6 +95,7 @@ export class ScannerPage implements OnInit, OnDestroy {
     }
   }
 
+  /*
   async demarrerScanNatif() {
     try {
       const { camera } = await BarcodeScanner.requestPermissions();
@@ -123,6 +124,87 @@ export class ScannerPage implements OnInit, OnDestroy {
       }
     }
   }
+*/
+
+
+async demarrerScanNatif() {
+  try {
+    // 1. Vérifier/installer le module Google Barcode Scanner
+    const moduleInstalled = await this.verifierModuleMLKit();
+    if (!moduleInstalled) return;
+
+    // 2. Permission caméra
+    const { camera } = await BarcodeScanner.requestPermissions();
+    if (camera !== 'granted' && camera !== 'limited') {
+      this.erreur = 'Permission caméra refusée.';
+      return;
+    }
+
+    // 3. Lancer le scan (pas d'overlay Angular)
+    this.isScanning = false;
+    const { barcodes } = await BarcodeScanner.scan();
+    this.isScanning = false;
+
+    if (barcodes.length > 0) {
+      const raw = barcodes[0].rawValue;
+      if (typeof raw === 'string' && raw.length > 0) {
+        await this.traiterQrCode(raw);
+      } else {
+        this.erreur = 'QR Code vide ou illisible.';
+      }
+    }
+
+  } catch (err: any) {
+    this.isScanning = false;
+    if (err?.message !== 'scan cancelled') {
+      this.erreur = 'Erreur lors du scan. Réessayez.';
+      console.error('[Scanner] Erreur scan natif:', err);
+    }
+  }
+}
+
+// ── Vérifie si le module MLKit est disponible, sinon l'installe ──
+async verifierModuleMLKit(): Promise<boolean> {
+  try {
+    const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable();
+
+    if (available) return true;
+
+    // Module absent → afficher un message et installer
+    this.erreur = 'Installation du module scanner en cours...';
+
+    await new Promise<void>((resolve, reject) => {
+      BarcodeScanner.addListener(
+        'googleBarcodeScannerModuleInstallProgress',
+        (event: { state: GoogleBarcodeScannerModuleInstallState; progress?: number }) => {
+          console.log('[MLKit] Install state:', event.state, '| progress:', event.progress);
+
+          if (event.state === GoogleBarcodeScannerModuleInstallState.COMPLETED) {
+            BarcodeScanner.removeAllListeners();
+            resolve();
+          } else if (
+            event.state === GoogleBarcodeScannerModuleInstallState.FAILED ||
+            event.state === GoogleBarcodeScannerModuleInstallState.CANCELED
+          ) {
+            BarcodeScanner.removeAllListeners();
+            reject(new Error('Installation échouée'));
+          }
+        }
+      );
+
+      // Lancer l'installation
+      BarcodeScanner.installGoogleBarcodeScannerModule().catch(reject);
+    });
+
+    this.erreur = null;
+    return true;
+
+  } catch (err: any) {
+    this.erreur = 'Impossible d\'installer le module scanner. Vérifiez votre connexion.';
+    console.error('[MLKit] Install error:', err);
+    return false;
+  }
+}
 
   async demarrerScanWeb() {
     this.isScanning = true;
