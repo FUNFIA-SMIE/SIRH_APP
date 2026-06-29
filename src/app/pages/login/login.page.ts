@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -18,6 +18,7 @@ import { addIcons } from 'ionicons';
 import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, businessOutline, shieldCheckmarkOutline, warningOutline, logInOutline } from 'ionicons/icons';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-login',
@@ -30,7 +31,7 @@ import { Router } from '@angular/router';
     CommonModule, FormsModule
   ]
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
 
   identifiant: string = '';
   mot_de_passe: string = '';
@@ -44,7 +45,8 @@ export class LoginPage {
     private http: HttpClient,
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
-    private router: Router
+    private router: Router,
+    private session: SessionService
   ) {
     addIcons({shieldCheckmarkOutline,personOutline,lockClosedOutline,warningOutline,logInOutline,businessOutline,eyeOutline,eyeOffOutline});
   }
@@ -68,6 +70,12 @@ export class LoginPage {
       cssClass: 'alert-login-error',
     });
     await alert.present();
+  }
+
+  ngOnInit(): void {
+    if (this.session.isLoggedIn()) {
+      this.router.navigateByUrl('/dashboard');
+    }
   }
 
   async onLogin(): Promise<void> {
@@ -94,8 +102,7 @@ export class LoginPage {
     }).subscribe({
       next: async (res) => {
         this.isLoading = false;
-        localStorage.setItem('token', res.token);
-        localStorage.setItem('utilisateur', JSON.stringify(res.utilisateur));
+        this.session.setSession(res.token, res.utilisateur);
 /*
         const toast = await this.toastCtrl.create({
           message: `Bienvenue ${res.utilisateur.prenom} ${res.utilisateur.nom} 👋`,
@@ -106,8 +113,7 @@ export class LoginPage {
         await toast.present();
 */
         this.router.navigateByUrl('/dashboard', {
-          //animated: true,
-          //animationDirection: 'forward'
+          replaceUrl: true
         });
       },
 
@@ -143,4 +149,6 @@ export class LoginPage {
       }
     });
   }
+
+  
 }

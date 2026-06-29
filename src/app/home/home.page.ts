@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/standalone';
+import { SessionService } from '../services/session.service';
 
 @Component({
   selector: 'app-home',
@@ -8,11 +9,12 @@ import { IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/angular/stan
   imports: [IonHeader, IonToolbar, IonTitle, IonContent],
 })
 export class HomePage implements OnInit {
-  constructor() {}
-  token = localStorage.getItem('utilisateur');
+  token: any = null;
 
+  constructor(private session: SessionService) {}
 
   ngOnInit(): void {
+    this.token = this.session.getUser();
     if(this.token){
       console.log('Token trouvé:', this.token);
     }

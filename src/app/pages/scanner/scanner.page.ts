@@ -13,6 +13,7 @@ import {
   Result
 } from '@zxing/library';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-scanner',
@@ -48,7 +49,8 @@ export class ScannerPage implements OnInit, OnDestroy {
     private toastCtrl: ToastController,
     private alertCtrl: AlertController,
     private ngZone: NgZone,
-    private servc:ServiceSirh
+    private servc: ServiceSirh,
+    private session: SessionService
   ) {}
 
   async ngOnInit() {
@@ -251,7 +253,7 @@ export class ScannerPage implements OnInit, OnDestroy {
       return;
     }
 
-    const utilisateur = JSON.parse(localStorage.getItem('utilisateur') || '{}');
+    const utilisateur = this.session.getUser() || {};
 
     this.pointageService.enregistrerPointage(
       payload.employe_id,
@@ -438,7 +440,7 @@ export class ScannerPage implements OnInit, OnDestroy {
 
   async chargerHistoriqueServeur() {
     try {
-      const utilisateur = JSON.parse(localStorage.getItem('utilisateur') || '{}');
+      const utilisateur = this.session.getUser() || {};
       // Preferer `employe_id` si présent (structure utilisateur différente selon poste), sinon fallback sur `id`
       const employeId = utilisateur.employe_id ?? utilisateur.id;
       if (!employeId) return;

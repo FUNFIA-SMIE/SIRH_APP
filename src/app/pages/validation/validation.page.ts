@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule } from '@angular/forms';
 import { IonSelectOption, IonBadge, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonIcon, IonModal, IonButton } from '@ionic/angular/standalone';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { SessionService } from 'src/app/services/session.service';
 import { NavController, IonTextarea } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -60,7 +61,8 @@ export class ValidationPage implements OnInit {
     private fb: FormBuilder,
     private service: ServiceSirh,
     //private pdf: ServicesPdf,
-    private navCtrl: NavController
+    private navCtrl: NavController,
+    private session: SessionService
   ) {
 
     addIcons({ arrowBackOutline, searchOutline, checkmarkDoneCircleOutline, briefcaseOutline, calendarOutline, timeOutline, chatbubbleOutline, calculatorOutline, closeOutline, checkmarkOutline, alertCircleOutline, closeCircleOutline, documentTextOutline, checkmarkCircleOutline, informationCircleOutline });
@@ -69,9 +71,9 @@ export class ValidationPage implements OnInit {
   async ngOnInit() {
     await this.loadData();
 
-    this.data_ = localStorage.getItem('utilisateur');
-    if (this.data_) {
-      this.token = JSON.parse(this.data_);
+    const currentUser = this.session.getUser();
+    if (currentUser) {
+      this.token = currentUser;
       const poste = await this.service.getPosteById(this.token.poste_id).toPromise() as any;
 
       if (poste.intitule === 'Directeur Exécutif') {
@@ -136,9 +138,9 @@ export class ValidationPage implements OnInit {
 
   async confirmerRefus() {
 
-    const data_ = localStorage.getItem('utilisateur');
-    if (data_) {
-      this.token = JSON.parse(data_);
+    const currentUser = this.session.getUser();
+    if (currentUser) {
+      this.token = currentUser;
       console.log(this.token.poste_id);
     }
 
@@ -264,9 +266,9 @@ export class ValidationPage implements OnInit {
   */
   // ── Actions liste ─────────────────────────────────────────
   async approuver(d: any): Promise<void> {
-    const data_ = localStorage.getItem('utilisateur');
-    if (data_) {
-      this.token = JSON.parse(data_);
+    const currentUser = this.session.getUser();
+    if (currentUser) {
+      this.token = currentUser;
       console.log(this.token.poste_id);
     }
 

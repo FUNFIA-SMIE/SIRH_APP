@@ -6,6 +6,7 @@ import { QRCodeComponent } from 'angularx-qrcode';
 import { interval, Subscription } from 'rxjs';
 import { PointageServices, Pointage, QrPayload } from '../../services/pointage-services';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-qrcode',
@@ -30,7 +31,8 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
 
   constructor(
     private pointageService: PointageServices,
-    private service: ServiceSirh
+    private service: ServiceSirh,
+    private session: SessionService
   ) {}
 
   async ngOnInit() {
@@ -43,13 +45,13 @@ export class ScanCodeQRPage implements OnInit, OnDestroy {
   }
 
   async chargerUtilisateur() {
-    const data = localStorage.getItem('utilisateur');
-    if (!data) {
-      console.error('Aucun utilisateur trouvé dans le localStorage');
+    const user = this.session.getUser();
+    if (!user) {
+      console.error('Aucun utilisateur trouvé dans la session');
       return;
     }
 
-    this.utilisateur = JSON.parse(data);
+    this.utilisateur = user;
 
     try {
       this.poste = await this.service.getPosteById(this.utilisateur.poste_id).toPromise();

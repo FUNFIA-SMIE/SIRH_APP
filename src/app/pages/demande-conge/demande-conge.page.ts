@@ -15,6 +15,7 @@ import {
   arrowForwardOutline, paperPlaneOutline
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { SessionService } from 'src/app/services/session.service';
 import { DemandeAbsenceData, ServicesPdf } from 'src/app/services/services-pdf';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
@@ -75,6 +76,7 @@ export class DemandeCongePage implements OnInit {
     private fb: FormBuilder,
     private serviceSirh: ServiceSirh,
     private pdf: ServicesPdf,
+    private session: SessionService,
     private sanitizer: DomSanitizer
   ) {
     addIcons({
@@ -106,8 +108,10 @@ export class DemandeCongePage implements OnInit {
   }
 
   loadUserData() {
-    const data = localStorage.getItem('utilisateur');
-    if (data) { this.token = JSON.parse(data); }
+    const user = this.session.getUser();
+    if (user) {
+      this.token = user;
+    }
 
     // Données employé connecté (à remplacer par votre service Auth)
     this.currentUser = {
@@ -230,6 +234,22 @@ async previewPdf() {
   async soumettreDemande(): Promise<void> {
     if (this.congeForm.invalid) return;
 
+    // Si type 'maladie' sélectionné, justificatif obligatoire
+    const typeObj = this.getTypeSelectionne();
+    const libelle = (typeObj?.libelle || '').toLowerCase();
+    const estMaladie = libelle.includes('malad') || libelle.includes('maladie') || libelle.includes('sick');
+    if (estMaladie && !this.justificatifBase64) {
+      const alert = await this.alertCtrl.create({
+        header: '📎 Justificatif requis',
+        message: 'Pour un congé de maladie, un justificatif médical est obligatoire. Veuillez joindre un fichier.',
+        buttons: [
+          { text: 'OK', role: 'cancel', cssClass: 'alert-btn-cancel' }
+        ]
+      });
+      await alert.present();
+      return;
+    }
+
     const check = this.verifierDelaiDepot();
     if (!check.valide) {
       const alert = await this.alertCtrl.create({
@@ -237,7 +257,7 @@ async previewPdf() {
         message: check.message,
         buttons: [
           { text: 'Modifier les dates', role: 'cancel', cssClass: 'alert-btn-cancel' },
-          { text: 'Soumettre quand même', cssClass: 'alert-btn-force', handler: () => this.envoyerDemande() }
+          //{ text: 'Soumettre quand même', cssClass: 'alert-btn-force', handler: () => this.envoyerDemande() }
         ]
       });
       await alert.present();

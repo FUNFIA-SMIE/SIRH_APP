@@ -35,6 +35,12 @@ export class NotificationService {
 
   // ─── CANAL ANDROID (obligatoire Android 8+) ───────────────────
   async createChannel(): Promise<void> {
+    // Ignorer sur les plateformes ne supportant pas les canaux
+    if (this.platform.is('cordova') === false && this.platform.is('capacitor') === false) {
+      this.channelCreated = true;
+      return;
+    }
+
     try {
       await LocalNotifications.createChannel({
         id: 'sirh_channel',
@@ -51,6 +57,7 @@ export class NotificationService {
       console.log('✅ Canal créé');
     } catch (e) {
       console.error('Erreur création canal:', e);
+      this.channelCreated = true;
     }
   }
 

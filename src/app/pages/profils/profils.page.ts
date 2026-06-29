@@ -17,6 +17,7 @@ import {
   chevronBackOutline
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-profils',
@@ -53,7 +54,8 @@ export class ProfilsPage implements OnInit {
   constructor(
     private toastCtrl: ToastController,
     private actionSheetCtrl: ActionSheetController,
-    private srvc: ServiceSirh
+    private srvc: ServiceSirh,
+    private session: SessionService
   ) {
     // Enregistrement des icônes Ionicons
     addIcons({
@@ -70,9 +72,9 @@ export class ProfilsPage implements OnInit {
 
 
 
-    const data = localStorage.getItem('utilisateur');
-    if (data) {
-      this.token = JSON.parse(data);
+    const currentUser = this.session.getUser();
+    if (currentUser) {
+      this.token = currentUser;
       this.photoPreview = this.token.photo_url || this.photoPreview;
     }
 
@@ -134,9 +136,9 @@ export class ProfilsPage implements OnInit {
     try {
       await this.srvc.updateEmploye(this.token.employe_id, champsPersonnels).toPromise();
 
-      // Mettre à jour le localStorage avec les nouvelles données
+      // Mettre à jour la session avec les nouvelles données
       this.token = { ...this.token, ...champsPersonnels };
-      localStorage.setItem('utilisateur', JSON.stringify(this.token));
+      this.session.setSession(this.session.getToken() ?? '', this.token);
 
       const toast = await this.toastCtrl.create({
         message: 'Profil mis à jour avec succès !',

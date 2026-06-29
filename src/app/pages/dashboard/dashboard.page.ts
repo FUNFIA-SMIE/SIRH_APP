@@ -8,6 +8,7 @@ import {
   calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline,gridOutline
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
+import { SessionService } from 'src/app/services/session.service';
 import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { NotificationService } from 'src/app/services/notification';
@@ -31,6 +32,7 @@ export class DashboardPage implements OnInit {
   constructor(
     private navCtrl: NavController,
     private srvc: ServiceSirh,
+    private session: SessionService,
     private notifService: NotificationService
   ) {
     addIcons({
@@ -50,35 +52,45 @@ export class DashboardPage implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const data = localStorage.getItem('utilisateur');
-    if (data) {
-      this.token = JSON.parse(data);
-      const poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
-
-      if (poste.intitule === 'Directeur Exécutif') {
-        this.status = true;      // ← filterStatut, pas searchQuery
-      } else if (poste.intitule === 'MEDECIN CHEF' || poste.intitule === 'MAJOR') {
-        this.status = true;
+    try {
+      const currentUser = this.session.getUser();
+      
+      if (!currentUser) {
+        this.navCtrl.navigateRoot('/login', { animationDirection: 'back' });
+        return;
       }
 
+      this.token = currentUser;
+      
+      let poste: any = null;
+      try {
+        poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
+        
+        if (poste?.intitule === 'Directeur Exécutif') {
+          this.status = true;
+        } else if (poste?.intitule === 'MEDECIN CHEF' || poste?.intitule === 'MAJOR') {
+          this.status = true;
+        }
+      } catch (err) {
+        console.error('Erreur chargement poste:', err);
+        poste = null;
+      }
 
+      console.log("this.data", this.token)
 
+      // ✅ init() AVANT tout le reste
+      await this.notifService.init();
+      await this.chargerDonnees();
+
+      const is_manager = poste && ['MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'].includes(poste.intitule);
+
+      // ✅ connectSocket seulement après que init() soit terminé
+      this.notifService.connectSocket(this.token.employe_id, is_manager);
+    } catch (err) {
+      console.error('Erreur ngOnInit dashboard:', err);
+      this.session.clearSession();
+      this.navCtrl.navigateRoot('/login', { animationDirection: 'back' });
     }
-
-    console.log("this.data", this.token)
-
-
-
-
-    // ✅ init() AVANT tout le reste
-    await this.notifService.init();
-    await this.chargerDonnees();
-
-    const poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
-    const is_manager = ['MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'].includes(poste?.intitule);
-
-    // ✅ connectSocket seulement après que init() soit terminé
-    this.notifService.connectSocket(this.token.employe_id, is_manager);
   }
   ngOnDestroy() {
     this.notifService.disconnectSocket();
@@ -94,15 +106,21 @@ export class DashboardPage implements OnInit {
 
 
   async chargerDonnees() {
-    const data = localStorage.getItem('utilisateur');
-    if (data) {
-      this.token = JSON.parse(data);
-      this.historiques = await this.srvc.getHistorique(this.token.employe_id).toPromise();
+    try {
+      const currentUser = this.session.getUser();
+      if (currentUser) {
+        this.token = currentUser;
+        this.historiques = await this.srvc.getHistorique(this.token.employe_id).toPromise();
+      }
+      this.solde_conges = await this.srvc.solde_conges_employe().toPromise();
+      this.solde_conges = this.solde_conges.filter(
+        (p: any) => p.employe_id === this.token.employe_id
+      );
+    } catch (err) {
+      console.error('Erreur chargerDonnees:', err);
+      this.historiques = [];
+      this.solde_conges = [];
     }
-    this.solde_conges = await this.srvc.solde_conges_employe().toPromise();
-    this.solde_conges = this.solde_conges.filter(
-      (p: any) => p.employe_id === this.token.employe_id
-    );
   }
 
   // ─── POLLING TOUTES LES 30 SECONDES ─────────────────────────
@@ -151,9 +169,7 @@ export class DashboardPage implements OnInit {
   NavSCAN_QR(){this.navCtrl.navigateForward('/scanner');}
 
   logout() {
-    localStorage.removeItem('utilisateur');
-    localStorage.removeItem('token');
-
+    this.session.clearSession();
     this.navCtrl.navigateRoot('/login', { animationDirection: 'back' });
   }
 

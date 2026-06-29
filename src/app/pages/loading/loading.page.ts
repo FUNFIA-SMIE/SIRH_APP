@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonHeader, IonTitle, IonToolbar,IonSpinner,IonIcon } from '@ionic/angular/standalone';
 import { IonicModule, NavController } from '@ionic/angular';
+import { SessionService } from 'src/app/services/session.service';
 
 @Component({
   selector: 'app-loading',
@@ -13,11 +14,18 @@ import { IonicModule, NavController } from '@ionic/angular';
 })
 export class LoadingPage implements OnInit {
 
-constructor(private navCtrl: NavController) {}
+constructor(
+  private navCtrl: NavController,
+  private session: SessionService
+) {}
 
   ngOnInit() {
     setTimeout(() => {
-      this.navCtrl.navigateRoot('/login');
+      if (this.session.isLoggedIn()) {
+        this.navCtrl.navigateRoot('/dashboard', { replaceUrl: true });
+      } else {
+        this.navCtrl.navigateRoot('/login', { replaceUrl: true });
+      }
     }, 3000);
   }
 }

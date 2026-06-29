@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from './Environment';
+import { SessionService } from './session.service';
 
 // ─── MODÈLES ─────────────────────────────────────────────────
 export interface Pointage {
@@ -51,11 +52,14 @@ export class PointageServices {
 
   private readonly API = environment.apiUrl; // ex: 'http://localhost:3000/api'
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private session: SessionService
+  ) {}
 
   // ─── HEADERS ───────────────────────────────────────────────
   private get headers(): HttpHeaders {
-    const token = localStorage.getItem('token');
+    const token = this.session.getToken();
     if (!token) return new HttpHeaders();
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }
