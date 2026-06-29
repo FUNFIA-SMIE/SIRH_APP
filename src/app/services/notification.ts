@@ -6,7 +6,7 @@ import { io, Socket } from 'socket.io-client';
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private socket!: Socket;
-  private serverUrl = 'http://192.168.1.xxx:3000';
+  private serverUrl = 'http://192.168.88.200:3335';
   private permissionGranted = false;
   private channelCreated = false;
 

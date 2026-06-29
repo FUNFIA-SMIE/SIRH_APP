@@ -38,7 +38,7 @@ export class LoginPage implements OnInit {
   isLoading: boolean = false;
   showPassword: boolean = false;
   errorMessage: string = ''; // <--- Add this line
-  private apiUrl = 'http://192.168.88.46:3000';
+  private apiUrl = 'http://192.168.88.200:3335';
 
   constructor(
     private navCtrl: NavController,
