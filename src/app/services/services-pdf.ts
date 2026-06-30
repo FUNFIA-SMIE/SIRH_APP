@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import jsPDF from 'jspdf';
-
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 export interface DemandeAbsenceData {
   ref?: string;
   nom: string;
@@ -93,8 +95,30 @@ export class ServicesPdf {
 
 
   async generatePdf(data: DemandeAbsenceData): Promise<void> {
-    await this.loadImageAsBase64(); // attend toujours, idempotent donc pas de rechargement inutile
-    this.buildDoc(data).save(`demande_absence_${data.nom}_${data.prenom}.pdf`);
+    await this.loadImageAsBase64();
+    const doc = this.buildDoc(data);
+    const fileName = `demande_absence_${data.nom}_${data.prenom}.pdf`;
+
+    if (Capacitor.isNativePlatform()) {
+      // Sur APK/iOS : on écrit le fichier puis on propose de l'ouvrir/partager
+      const pdfBase64 = doc.output('datauristring').split(',')[1]; // on retire le préfixe data:...;base64,
+
+      const result = await Filesystem.writeFile({
+        path: fileName,
+        data: pdfBase64,
+        directory: Directory.Cache, // ou Directory.Documents selon vos besoins
+      });
+
+      await Share.share({
+        title: 'Demande d\'absence',
+        text: 'Voici votre demande d\'absence au format PDF',
+        url: result.uri,
+        dialogTitle: 'Partager ou ouvrir le PDF'
+      });
+    } else {
+      // Sur navigateur web classique : téléchargement habituel
+      doc.save(fileName);
+    }
   }
 
   async generatePdfDataUrl(data: DemandeAbsenceData): Promise<string> {
