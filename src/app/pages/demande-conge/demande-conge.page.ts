@@ -6,7 +6,8 @@ import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton,
   IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonInput,
   IonTextarea, IonButton, IonCard, IonDatetimeButton, IonAvatar,
-  IonBadge, IonGrid, IonRow, IonCol, IonIcon, IonModal, IonCheckbox, IonDatetime, IonNote, IonSpinner } from '@ionic/angular/standalone';
+  IonBadge, IonGrid, IonRow, IonCol, IonIcon, IonModal, IonCheckbox, IonDatetime, IonNote, IonSpinner
+} from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   documentAttachOutline, cloudUploadOutline, checkmarkCircleOutline,
@@ -39,7 +40,7 @@ function mapTypeConge(
   templateUrl: './demande-conge.page.html',
   styleUrls: ['./demande-conge.page.scss'],
   standalone: true,
-  imports: [IonSpinner, 
+  imports: [IonSpinner,
     CommonModule, FormsModule, ReactiveFormsModule,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton,
     IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonInput,
@@ -86,8 +87,8 @@ export class DemandeCongePage implements OnInit {
     this.initForm();
   }
 
-  ngOnInit() {
-    this.loadUserData();
+  async ngOnInit() {
+    await this.loadUserData();
     this.loadTypesConge();
   }
 
@@ -105,12 +106,23 @@ export class DemandeCongePage implements OnInit {
       motif: [''],
     });
   }
+  poste: any = null;
 
-  loadUserData() {
+  async loadUserData() {
     const user = this.session.getUser();
     if (user) {
       this.token = user;
     }
+
+    try {
+      this.poste = await this.serviceSirh.getPosteById(this.token.poste_id).toPromise() as any;
+      console.log(this.poste)
+
+    } catch (err) {
+      console.error('Erreur chargement poste:', err);
+      this.poste = null;
+    }
+
 
     // Données employé connecté (à remplacer par votre service Auth)
     this.currentUser = {
@@ -118,7 +130,7 @@ export class DemandeCongePage implements OnInit {
       nom: this.token?.nom ?? '',
       prenom: this.token?.prenom ?? '',
       matricule: this.token?.matricule ?? '',
-      poste: this.token?.poste ?? '',
+      poste: this.poste?.intitule ?? '',
       societe: this.token?.societe ?? 'FUNFIA',
       photo_url: 'https://i.pravatar.cc/150?u=awa'
     };
@@ -190,7 +202,7 @@ export class DemandeCongePage implements OnInit {
       // ── Partie I : données employé connecté ──
       nom: (this.currentUser?.nom ?? '').toUpperCase(),
       prenom: this.currentUser?.prenom ?? '',
-      fonction: this.currentUser?.poste ?? this.token?.fonction ?? '',
+      fonction: this.poste?.intitule ?? '',
       societe: this.currentUser?.societe ?? 'FUNFIA',
       matricule: this.currentUser?.matricule ?? this.token?.matricule ?? '',
       dateDemande: this.formatDate(new Date()),
