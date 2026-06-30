@@ -33,6 +33,7 @@ export class ServicesPdf {
 
   imagePath = 'assets/l.jpg';
   imageBase64: string | null = null;
+  imageRatio = 1;
 
   constructor(private http: HttpClient) {
     // Précharger l'image dès l'instanciation du service
@@ -45,46 +46,61 @@ export class ServicesPdf {
    * Charge l'image locale et la convertit en Base64.
    * Retourne une Promise afin de pouvoir l'awaiter si nécessaire.
    */
+  private imageLoadPromise: Promise<void> | null = null;
+  isImageReady = false;
+
   private loadImageAsBase64(): Promise<void> {
-    return new Promise((resolve) => {
+    if (this.imageLoadPromise) {
+      return this.imageLoadPromise;
+    }
+    this.imageLoadPromise = new Promise((resolve) => {
       this.http.get(this.imagePath, { responseType: 'blob' }).subscribe({
         next: (blob: Blob) => {
           const reader = new FileReader();
           reader.readAsDataURL(blob);
           reader.onloadend = () => {
             this.imageBase64 = reader.result as string;
-            resolve();
+            const img = new Image();
+            img.onload = () => {
+              if (img.naturalWidth > 0) {
+                this.imageRatio = img.naturalHeight / img.naturalWidth;
+              }
+              this.isImageReady = true;
+              resolve();
+            };
+            img.onerror = () => {
+              console.warn('ServicesPdf : impossible de charger les dimensions de l\'image.');
+              this.isImageReady = true;
+              resolve();
+            };
+            img.src = this.imageBase64!;
           };
           reader.onerror = () => {
             console.warn('ServicesPdf : impossible de lire le blob de l\'image.');
-            resolve(); // on ne bloque pas la génération
+            this.isImageReady = true;
+            resolve();
           };
         },
         error: (err) => {
           console.error('ServicesPdf : erreur lors du chargement de l\'image :', err);
-          resolve(); // on ne bloque pas la génération
+          this.isImageReady = true;
+          resolve();
         }
       });
     });
+    return this.imageLoadPromise;
   }
 
+
   async generatePdf(data: DemandeAbsenceData): Promise<void> {
-    if (!this.imageBase64) {
-      await this.loadImageAsBase64();
-    }
+    await this.loadImageAsBase64(); // attend toujours, idempotent donc pas de rechargement inutile
     this.buildDoc(data).save(`demande_absence_${data.nom}_${data.prenom}.pdf`);
   }
 
-  /**
-   * Retourne le PDF sous forme de data URL (ex. pour affichage dans un iframe).
-   */
   async generatePdfDataUrl(data: DemandeAbsenceData): Promise<string> {
-    if (!this.imageBase64) {
-      await this.loadImageAsBase64();
-    }
+    await this.loadImageAsBase64();
     return this.buildDoc(data).output('dataurlstring');
   }
-
   // ─── CONSTRUCTION DU DOCUMENT ─────────────────────────────────────────────
 
   private buildDoc(data: DemandeAbsenceData): jsPDF {
@@ -97,11 +113,10 @@ export class ServicesPdf {
     let y = 8;
 
     // ── EN-TÊTE ──────────────────────────────────────────────────────────────
+    // ── EN-TÊTE ──────────────────────────────────────────────────────────────
     if (this.imageBase64) {
-      const img = new Image();
-      img.src = this.imageBase64;
-      const ratio = img.naturalHeight / img.naturalWidth;
       const imgW = 20;
+      const ratio = (this.imageRatio > 0 && isFinite(this.imageRatio)) ? this.imageRatio : 1;
       const imgH = imgW * ratio;
       doc.addImage(this.imageBase64, 'PNG', marginL, y, imgW, imgH);
     } else {
@@ -119,7 +134,7 @@ export class ServicesPdf {
 
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
-    doc.text(`REF : ${data.ref ?? '..../.........../...............'}`, marginL + 30, y + 11);
+    doc.text(`REF : ${'............./.........../...............'}`, marginL + 30, y + 11);
     y += 18;
 
     // ── PARTIE I ─────────────────────────────────────────────────────────────
@@ -137,7 +152,7 @@ export class ServicesPdf {
     // ── PARTIE II ────────────────────────────────────────────────────────────
     y = this.sectionHeader(doc, 'II - PARTIE RESERVEE A LA DIRECTION DES RESSOURCES HUMAINES :', marginL, y, cW);
     y = this.subHeader(doc, "A - PERIODE D'ABSENCE :", marginL, y, cW);
-    y = this.twoFields(doc, 'Date de départ', data.dateDepart, 'Date de retour', data.dateRetour, marginL, y, cW);
+    y = this.twoFields(doc, 'Date de début', data.dateDepart, 'Date fin', data.dateRetour, marginL, y, cW);
     y = this.field(doc, 'Durée', data.duree, marginL, y, cW);
 
     y = this.subHeader(doc, 'B - TYPE :', marginL, y, cW);

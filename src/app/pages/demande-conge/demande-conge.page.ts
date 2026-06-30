@@ -6,8 +6,7 @@ import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton,
   IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonInput,
   IonTextarea, IonButton, IonCard, IonDatetimeButton, IonAvatar,
-  IonBadge, IonGrid, IonRow, IonCol, IonIcon, IonModal, IonCheckbox, IonDatetime, IonNote
-} from '@ionic/angular/standalone';
+  IonBadge, IonGrid, IonRow, IonCol, IonIcon, IonModal, IonCheckbox, IonDatetime, IonNote, IonSpinner } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   documentAttachOutline, cloudUploadOutline, checkmarkCircleOutline,
@@ -40,7 +39,7 @@ function mapTypeConge(
   templateUrl: './demande-conge.page.html',
   styleUrls: ['./demande-conge.page.scss'],
   standalone: true,
-  imports: [
+  imports: [IonSpinner, 
     CommonModule, FormsModule, ReactiveFormsModule,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton,
     IonList, IonItem, IonLabel, IonSelect, IonSelectOption, IonInput,
@@ -218,17 +217,20 @@ export class DemandeCongePage implements OnInit {
       motif: v.motif ?? '',
     };
   }
-
+  isGeneratingPdf = false;
   // ── Aperçu PDF ────────────────────────────────────────────────────────────
-async previewPdf() {
-  try {
-    const url = await this.pdf.generatePdfDataUrl(this.buildFormData());
-    this.pdfPreviewUrlSafe = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    this.pdfModalOpen = true;
-  } catch (e) {
-    this.showToast("Impossible de générer l'aperçu PDF", 'error');
+  async previewPdf() {
+    this.isGeneratingPdf = true;
+    try {
+      const url = await this.pdf.generatePdfDataUrl(this.buildFormData());
+      this.pdfPreviewUrlSafe = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      this.pdfModalOpen = true;
+    } catch (e) {
+      this.showToast("Impossible de générer l'aperçu PDF", 'error');
+    } finally {
+      this.isGeneratingPdf = false;
+    }
   }
-}
 
   // ── Soumission avec vérification du délai ────────────────────────────────
   async soumettreDemande(): Promise<void> {
@@ -268,8 +270,14 @@ async previewPdf() {
 
   private async envoyerDemande(): Promise<void> {
     // Génère et télécharge le PDF avec les vraies données
-    this.pdf.generatePdf(this.buildFormData());
 
+    this.isGeneratingPdf = true;
+
+    try {
+      await this.pdf.generatePdf(this.buildFormData());
+    } finally {
+      this.isGeneratingPdf = false;
+    }
     const v = this.congeForm.value;
     const payload = {
       id: crypto.randomUUID(),
