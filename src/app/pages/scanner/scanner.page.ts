@@ -8,7 +8,9 @@ import { PointageServices, Pointage, EmployeInfo, QrPayload } from '../../servic
 
 // ── ZXing (import depuis @zxing/library, PAS @zxing/browser) ──
 import {
+  BarcodeFormat,
   BrowserMultiFormatReader,
+  DecodeHintType,
   NotFoundException,
   Result
 } from '@zxing/library';
@@ -205,7 +207,7 @@ async verifierModuleMLKit(): Promise<boolean> {
     return false;
   }
 }
-
+/*
   async demarrerScanWeb() {
     this.isScanning = true;
 
@@ -266,7 +268,129 @@ async verifierModuleMLKit(): Promise<boolean> {
       }
     }
   }
+*/
 
+
+async demarrerScanWeb() {
+  this.isScanning = true;
+
+  // Laisser Angular rendre le <video> dans le DOM
+  await new Promise(r => setTimeout(r, 400));
+
+  const videoEl = document.getElementById('qr-video') as HTMLVideoElement;
+  if (!videoEl) {
+    this.erreur = 'Élément vidéo introuvable. Rechargez la page.';
+    this.isScanning = false;
+    return;
+  }
+
+  try {
+    // Hints ZXing : se concentrer sur le QR uniquement + scan renforcé
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]);
+    hints.set(DecodeHintType.TRY_HARDER, true);
+
+    this.codeReader = new BrowserMultiFormatReader(hints);
+
+    console.log('[Scanner] Démarrage ZXing sur videoEl=', videoEl);
+
+    // Constraints vidéo explicites : demande la meilleure résolution possible
+    // et l'autofocus continu (important sur les caméras basse résolution / focus fixe)
+    const constraints: MediaStreamConstraints = {
+      video: {
+        facingMode: 'environment',
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 },
+        // @ts-ignore - non standard mais supporté par plusieurs navigateurs
+        advanced: [{ focusMode: 'continuous' }]
+      }
+    };
+
+    this.scanControls = await this.codeReader.decodeFromConstraints(
+      constraints,
+      videoEl,
+      (result: Result | undefined, err: any) => {
+
+        if (result && !this.scanDone) {
+          this.scanDone = true;
+          const text = result.getText();
+          console.log('[Scanner] ✅ QR détecté =', text);
+
+          this.ngZone.run(async () => {
+            await this.arreterScanWeb();
+            await this.traiterQrCode(text);
+          });
+          return;
+        }
+
+        // Logguer les vraies erreurs (pas les NotFoundException = frame vide normal)
+        if (err && !(err instanceof NotFoundException)) {
+          console.warn('[Scanner] ZXing frame error:', err?.message);
+        }
+      }
+    );
+
+    console.log('[Scanner] ZXing controls=', this.scanControls);
+
+  } catch (err: any) {
+    this.isScanning   = false;
+    this.codeReader   = null;
+    this.scanControls = null;
+    console.error('[Scanner] Erreur démarrage:', err);
+
+    if (err?.message?.toLowerCase().includes('permission')) {
+      this.erreur = 'Permission caméra refusée. Autorisez l\'accès dans Firefox.';
+    } else if (err?.message?.toLowerCase().includes('no cameras')) {
+      this.erreur = 'Aucune caméra détectée.';
+    } else if (err?.name === 'OverconstrainedError') {
+      // La caméra ne supporte pas la résolution demandée → retenter en fallback plus permissif
+      console.warn('[Scanner] Constraints trop strictes, retry en fallback...');
+      await this.demarrerScanWebFallback();
+    } else {
+      this.erreur = 'Impossible de démarrer la caméra : ' + (err?.message ?? 'erreur inconnue');
+    }
+  }
+}
+
+// ── Fallback si les constraints strictes échouent (ex: caméra 1.3Mpx sans focusMode) ──
+async demarrerScanWebFallback() {
+  const videoEl = document.getElementById('qr-video') as HTMLVideoElement;
+  if (!videoEl) return;
+
+  try {
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE]);
+    hints.set(DecodeHintType.TRY_HARDER, true);
+
+    this.codeReader = new BrowserMultiFormatReader(hints);
+
+    // Constraints minimales, juste facingMode
+    this.scanControls = await this.codeReader.decodeFromConstraints(
+      { video: { facingMode: 'environment' } },
+      videoEl,
+      (result: Result | undefined, err: any) => {
+        if (result && !this.scanDone) {
+          this.scanDone = true;
+          const text = result.getText();
+          this.ngZone.run(async () => {
+            await this.arreterScanWeb();
+            await this.traiterQrCode(text);
+          });
+          return;
+        }
+        if (err && !(err instanceof NotFoundException)) {
+          console.warn('[Scanner] ZXing frame error (fallback):', err?.message);
+        }
+      }
+    );
+  } catch (err: any) {
+    this.isScanning   = false;
+    this.codeReader   = null;
+    this.scanControls = null;
+    this.erreur = 'Impossible de démarrer la caméra : ' + (err?.message ?? 'erreur inconnue');
+    console.error('[Scanner] Erreur fallback:', err);
+  }
+}
   async arreterScanWeb() {
     try {
       if (this.scanControls && typeof this.scanControls.stop === 'function') {
