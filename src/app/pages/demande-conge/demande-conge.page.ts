@@ -305,13 +305,29 @@ export class DemandeCongePage implements OnInit {
     };
 
     this.serviceSirh.creerConge(payload).subscribe({
-      next: () => {
-        this.showToast('Demande envoyée avec succès !', 'success');
-        this.closeCreationModal();
-        this.justificatifBase64 = null;
+      next: async () => {
+        const alert = await this.alertCtrl.create({
+          header: '✅ Succès',
+          message: 'Votre demande de congé a été envoyée avec succès !',
+          buttons: [
+            { text: 'OK', handler: () => {
+              this.closeCreationModal();
+              this.justificatifBase64 = null;
+              this.navCtrl.navigateBack('/dashboard', { animated: true });
+            }}
+          ]
+        });
+        await alert.present();
       },
-      error: (err) => {
-        this.showToast(err.error?.error || 'Une erreur est survenue', 'error');
+      error: async (err) => {
+        const alert = await this.alertCtrl.create({
+          header: '❌ Erreur',
+          message: err.error?.error || 'Une erreur est survenue lors de l\'envoi de la demande. Veuillez réessayer.',
+          buttons: [
+            { text: 'OK', role: 'cancel' }
+          ]
+        });
+        await alert.present();
       }
     });
   }
