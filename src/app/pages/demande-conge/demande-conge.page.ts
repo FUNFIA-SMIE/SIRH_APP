@@ -340,7 +340,7 @@ export class DemandeCongePage implements OnInit {
     const joursAvance = Math.round((dateDebut.getTime() - aujourd_hui.getTime()) / 86400000);
 
     let delaiRequis = 0, libelle = '';
-    if (nb === 1) { delaiRequis = 0; libelle = 'la veille ou le jour même'; }
+    if (nb <= 1) { delaiRequis = 0; libelle = 'la veille ou le jour même'; }
     else if (nb <= 3) { delaiRequis = 7; libelle = '7 jours à l\'avance'; }
     else if (nb <= 7) { delaiRequis = 10; libelle = '10 jours à l\'avance'; }
     else if (nb <= 15) { delaiRequis = 21; libelle = '21 jours à l\'avance'; }
