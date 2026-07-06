@@ -179,11 +179,10 @@ ion-toolbar {
   gap: 6px;
   cursor: pointer;
 
-  .date-block-label {
-    font-size: 9px;
-    font-weight: 800;
-    color: #94a3b8;
-    letter-spacing: 1.5px;
+  &.disabled {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
   }
 
   .date-btn {

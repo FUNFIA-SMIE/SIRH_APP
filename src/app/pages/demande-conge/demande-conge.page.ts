@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
@@ -50,7 +50,6 @@ function mapTypeConge(
 })
 export class DemandeCongePage implements OnInit {
 
-  today = new Date().toISOString().split('T')[0];
   dateDebutAffiche = this.formatDate(new Date());
   dateFinAffiche = this.formatDate(new Date());
 
@@ -70,6 +69,17 @@ export class DemandeCongePage implements OnInit {
   modalCreationVisible = false;
   fileName = '';
 
+  // ── Validation dates ────────────────────────────────────────
+  dateDebutError = '';
+  dateFinError = '';
+  dateDebutInvalide = false;
+  dateFinInvalide = false;
+
+  nbJours = 0;
+
+  poste: any = null;
+  departement: any = null;
+
   constructor(
     private alertCtrl: AlertController,
     private navCtrl: NavController,
@@ -77,7 +87,9 @@ export class DemandeCongePage implements OnInit {
     private serviceSirh: ServiceSirh,
     private pdf: ServicesPdf,
     private session: SessionService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {
     addIcons({
       informationCircleOutline, calendarOutline, arrowForwardOutline,
@@ -87,9 +99,28 @@ export class DemandeCongePage implements OnInit {
     this.initForm();
   }
 
+  onDateChange(which: 'debut' | 'fin', event: any) {
+    // ion-datetime peut émettre en dehors de la zone Angular; forcer
+    // la mise à jour immédiatement pour que les affichages liés
+    // (`dateDebutAffiche`, `dateFinAffiche`, `minDateFin`, `nbJours`)
+    // soient recalculés.
+    this.ngZone.run(() => {
+      const val = event?.detail?.value ?? event?.target?.value;
+      if (!val) return;
+      if (which === 'debut') {
+        this.congeForm.get('date_debut')?.setValue(val);
+      } else {
+        this.congeForm.get('date_fin')?.setValue(val);
+      }
+      this.recalculer();
+      try { this.cdr.detectChanges(); } catch (e) { /* noop */ }
+    });
+  }
+
   async ngOnInit() {
     await this.loadUserData();
     this.loadTypesConge();
+    this.recalculer();
   }
 
   goBack() {
@@ -99,14 +130,78 @@ export class DemandeCongePage implements OnInit {
   initForm(): void {
     this.congeForm = this.fb.group({
       type_conge_id: ['', Validators.required],
-      date_debut: [new Date().toISOString(), Validators.required],
-      date_fin: [new Date().toISOString(), Validators.required],
+      date_debut: [this.toLocalDateString(new Date(), true), Validators.required],
+      date_fin: [this.toLocalDateString(new Date(), true), Validators.required],
       demi_journee_debut: [false],
       demi_journee_fin: [false],
       motif: [''],
     });
+
+    // Recalcule à chaque changement réel de valeur (pas à chaque cycle de rendu)
+    this.congeForm.get('date_debut')?.valueChanges.subscribe(() => this.recalculer());
+    this.congeForm.get('date_fin')?.valueChanges.subscribe(() => this.recalculer());
+    this.congeForm.get('demi_journee_debut')?.valueChanges.subscribe(() => this.recalculer());
+    this.congeForm.get('demi_journee_fin')?.valueChanges.subscribe(() => this.recalculer());
   }
-  poste: any = null;
+
+  /**
+   * Convertit une Date en chaîne LOCALE (jamais UTC), au format attendu
+   * par ion-datetime / les inputs du formulaire.
+   * ⚠️ Ne JAMAIS utiliser toISOString() ici : toISOString() renvoie une
+   * date en UTC, ce qui peut faire "reculer" la date d'un jour selon
+   * l'heure et le fuseau de l'utilisateur (ex: 01h00 à Madagascar = UTC+3
+   * => toISOString() renvoie encore la veille).
+   */
+  private toLocalDateString(d: Date, withTime = false): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const base = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    return withTime ? `${base}T00:00:00` : base;
+  }
+
+  private toMidnight(dateStr: string): Date {
+    const d = new Date(dateStr);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  // ── Recalcul centralisé (dates affichées + validation + nb jours) ────────
+  recalculer(): void {
+    const values = this.congeForm.value;
+    if (values.date_debut) this.dateDebutAffiche = this.formatDate(new Date(values.date_debut));
+    if (values.date_fin) this.dateFinAffiche = this.formatDate(new Date(values.date_fin));
+
+    this.validerDateDebut();
+    this.validerDateFin();
+
+    if (!values.date_debut || !values.date_fin) { this.nbJours = 0; return; }
+
+    const debut = this.toMidnight(values.date_debut);
+    const fin = this.toMidnight(values.date_fin);
+
+    if (isNaN(debut.getTime()) || isNaN(fin.getTime()) || fin < debut) {
+      this.nbJours = 0;
+      return;
+    }
+
+    // date_fin = jour de retour au bureau → PAS compté comme jour de congé
+    let diffDays = Math.round((fin.getTime() - debut.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Demi-journée au départ : l'employé part l'après-midi → -0.5 jour
+    if (values.demi_journee_debut) diffDays -= 0.5;
+
+    // Demi-journée au retour : l'employé ne reprend que l'après-midi,
+    // donc la matinée du jour de retour compte comme congé → +0.5 jour
+    // ⚠️ À valider avec la RH selon la règle métier exacte. Si "Matin"
+    // signifie au contraire "présent le matin, pas de demi-jour en plus",
+    // inverser simplement le signe ci-dessous.
+    if (values.demi_journee_fin) diffDays += 0.5;
+
+    this.nbJours = diffDays < 0 ? 0 : diffDays;
+    // Certaines mises à jour provenant d'ion-datetime peuvent se produire
+    // hors du cycle de détection Angular; forcer la détection évite un
+    // retard visuel après sélection de la date.
+    try { this.cdr.detectChanges(); } catch (e) { /* noop */ }
+  }
 
   async loadUserData() {
     const user = this.session.getUser();
@@ -116,15 +211,21 @@ export class DemandeCongePage implements OnInit {
 
     try {
       this.poste = await this.serviceSirh.getPosteById(this.token.poste_id).toPromise() as any;
-      console.log(this.poste)
-
+      console.log(this.poste);
     } catch (err) {
       console.error('Erreur chargement poste:', err);
       this.poste = null;
     }
 
+    try {
+      this.departement = await this.serviceSirh.getDepartmentById(this.token.departement_id).toPromise() as any;
+      console.log(this.departement);
+    } catch (err) {
+      console.error('Erreur chargement département:', err);
+      this.departement = null;
+    }
 
-    // Données employé connecté (à remplacer par votre service Auth)
+    // Données employé connecté
     this.currentUser = {
       id: this.token?.employe_id ?? 0,
       nom: this.token?.nom ?? '',
@@ -134,6 +235,9 @@ export class DemandeCongePage implements OnInit {
       societe: this.token?.societe ?? 'FUNFIA',
       photo_url: 'https://i.pravatar.cc/150?u=awa'
     };
+
+    // Une fois le poste/département connus, on revalide tout
+    this.recalculer();
   }
 
   async loadTypesConge() {
@@ -157,23 +261,82 @@ export class DemandeCongePage implements OnInit {
     } catch { this.solde_restant = 0; }
   }
 
-  calculerJours(): number {
-    const values = this.congeForm.value;
-    if (values.date_debut) this.dateDebutAffiche = this.formatDate(new Date(values.date_debut));
-    if (values.date_fin) this.dateFinAffiche = this.formatDate(new Date(values.date_fin));
+  // ── Validation jours interdits ───────────────────────────────
+  private samediFinAutorise(): boolean {
+    const codeDept = this.departement?.code;
+    const intitulePoste = this.poste?.intitule;
 
-    const debut = new Date(values.date_debut);
-    const fin = new Date(values.date_fin);
-    if (isNaN(debut.getTime()) || isNaN(fin.getTime()) || fin < debut) return 0;
+    return codeDept === 'PARAMED' || codeDept === 'MED'
+      || intitulePoste === 'MEDECIN CHEF' 
+      || intitulePoste === 'MAJOR' 
+      || intitulePoste === 'MEDECIN' 
+      || intitulePoste === 'Assistante Dentaire' 
+      || intitulePoste === "Agent d'Accueil"
+      || intitulePoste === 'PARAMED'
+      || intitulePoste === 'Agent de surface'
+  }
 
-    let diffDays = Math.round((fin.getTime() - debut.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    if (values.demi_journee_debut) diffDays -= 0.5;
-    if (values.demi_journee_fin) diffDays -= 0.5;
-    return diffDays < 0 ? 0 : diffDays;
+  private validerDateDebut(): void {
+    const ctrl = this.congeForm.get('date_debut');
+    const val = ctrl?.value;
+    if (!val) {
+      this.dateDebutError = '';
+      this.dateDebutInvalide = false;
+      ctrl?.setErrors(null);
+      return;
+    }
+
+    const jour = new Date(val).getDay(); // 0 = dimanche, 6 = samedi
+
+    if (jour === 0 || jour === 6) {
+      this.dateDebutError = 'Le congé ne peut pas commencer un samedi ou un dimanche.';
+      this.dateDebutInvalide = true;
+      ctrl?.setErrors({ jourInterdit: true });
+      return;
+    }
+
+    this.dateDebutError = '';
+    this.dateDebutInvalide = false;
+    ctrl?.setErrors(null);
+  }
+
+  private validerDateFin(): void {
+    const ctrl = this.congeForm.get('date_fin');
+    const val = ctrl?.value;
+    if (!val) {
+      this.dateFinError = '';
+      this.dateFinInvalide = false;
+      ctrl?.setErrors(null);
+      return;
+    }
+
+    const jour = new Date(val).getDay(); // 0 = dimanche, 6 = samedi
+
+    if (jour === 0) {
+      this.dateFinError = 'Le retour ne peut pas être fixé un dimanche.';
+      this.dateFinInvalide = true;
+      ctrl?.setErrors({ jourInterdit: true });
+      return;
+    }
+
+    if (jour === 6 && !this.samediFinAutorise()) {
+      this.dateFinError = 'Le retour un samedi est réservé au personnel MEDECIN/PARAMED.';
+      this.dateFinInvalide = true;
+      ctrl?.setErrors({ jourInterdit: true });
+      return;
+    }
+
+    this.dateFinError = '';
+    this.dateFinInvalide = false;
+    ctrl?.setErrors(null);
   }
 
   getSoldeUnite(): string {
     return this.getTypeSelectionne()?.code === 'DISPO' ? 'H' : 'j';
+  }
+
+  get typeSelectionne(): boolean {
+    return !!this.congeForm.get('type_conge_id')?.value;
   }
 
   getTypeSelectionne(): any {
@@ -185,21 +348,16 @@ export class DemandeCongePage implements OnInit {
   private buildFormData(): DemandeAbsenceData {
     const v = this.congeForm.value;
     const typeObj = this.getTypeSelectionne();
-    const nbJours = this.calculerJours();
+    const nbJours = this.nbJours;
     const soldeTotal = typeObj?.solde ?? this.solde_restant;
     const reliquat = soldeTotal - nbJours;
 
-    // Détermine la clé de type à partir du libellé renvoyé par l'API
     const typeKey = mapTypeConge(typeObj?.libelle ?? '');
-
-    // Heure de départ/retour uniquement pour autorisation de sortie
     const isAutorisationSortie = typeKey === 'autorisation_sortie';
 
     return {
-      // Référence auto-générée
       ref: `${String(new Date().getMonth() + 1).padStart(3, '0')}/${new Date().getFullYear()}/RH`,
 
-      // ── Partie I : données employé connecté ──
       nom: (this.currentUser?.nom ?? '').toUpperCase(),
       prenom: this.currentUser?.prenom ?? '',
       fonction: this.poste?.intitule ?? '',
@@ -207,29 +365,26 @@ export class DemandeCongePage implements OnInit {
       matricule: this.currentUser?.matricule ?? this.token?.matricule ?? '',
       dateDemande: this.formatDate(new Date()),
 
-      // ── Partie II : période saisie dans le formulaire ──
       dateDepart: this.formatDate(new Date(v.date_debut)),
       dateRetour: this.formatDate(new Date(v.date_fin)),
       duree: `${nbJours} jour${nbJours > 1 ? 's' : ''}`,
 
-      // ── Type coché ──
       type: typeKey,
 
-      // ── Si congé payé : soldes ──
       droits: typeKey === 'conge_paye' ? `${soldeTotal} jour${soldeTotal > 1 ? 's' : ''}` : '',
       congePrisDurantLeMois: typeKey === 'conge_paye' ? '0 jour' : '',
       congeDemande: typeKey === 'conge_paye' ? `${nbJours} jour${nbJours > 1 ? 's' : ''}` : '',
       reliquat: typeKey === 'conge_paye' ? `${reliquat} jour${reliquat > 1 ? 's' : ''}` : '',
 
-      // ── Si autorisation de sortie : heures ──
       heureDepart: isAutorisationSortie ? (v.heure_depart ?? '') : '',
       heureRetour: isAutorisationSortie ? (v.heure_retour ?? '') : '',
 
-      // ── Motif (tous types) ──
       motif: v.motif ?? '',
     };
   }
+
   isGeneratingPdf = false;
+
   // ── Aperçu PDF ────────────────────────────────────────────────────────────
   async previewPdf() {
     this.isGeneratingPdf = true;
@@ -247,6 +402,17 @@ export class DemandeCongePage implements OnInit {
   // ── Soumission avec vérification du délai ────────────────────────────────
   async soumettreDemande(): Promise<void> {
     if (this.congeForm.invalid) return;
+
+    this.recalculer(); // revalide au cas où
+    if (this.dateDebutInvalide || this.dateFinInvalide) {
+      const alert = await this.alertCtrl.create({
+        header: '📅 Dates invalides',
+        message: this.dateDebutError || this.dateFinError,
+        buttons: [{ text: 'OK', role: 'cancel', cssClass: 'alert-btn-cancel' }]
+      });
+      await alert.present();
+      return;
+    }
 
     // Si type 'maladie' sélectionné, justificatif obligatoire
     const typeObj = this.getTypeSelectionne();
@@ -271,7 +437,6 @@ export class DemandeCongePage implements OnInit {
         message: check.message,
         buttons: [
           { text: 'Modifier les dates', role: 'cancel', cssClass: 'alert-btn-cancel' },
-          //{ text: 'Soumettre quand même', cssClass: 'alert-btn-force', handler: () => this.envoyerDemande() }
         ]
       });
       await alert.present();
@@ -281,8 +446,6 @@ export class DemandeCongePage implements OnInit {
   }
 
   private async envoyerDemande(): Promise<void> {
-    // Génère et télécharge le PDF avec les vraies données
-
     this.isGeneratingPdf = true;
 
     try {
@@ -297,7 +460,7 @@ export class DemandeCongePage implements OnInit {
       type_conge_id: v.type_conge_id,
       date_debut: v.date_debut,
       date_fin: v.date_fin,
-      nb_jours: this.calculerJours(),
+      nb_jours: this.nbJours,
       motif: v.motif || null,
       demi_journee_debut: v.demi_journee_debut || false,
       demi_journee_fin: v.demi_journee_fin || false,
@@ -310,11 +473,13 @@ export class DemandeCongePage implements OnInit {
           header: '✅ Succès',
           message: 'Votre demande de congé a été envoyée avec succès !',
           buttons: [
-            { text: 'OK', handler: () => {
-              this.closeCreationModal();
-              this.justificatifBase64 = null;
-              this.navCtrl.navigateBack('/dashboard', { animated: true });
-            }}
+            {
+              text: 'OK', handler: () => {
+                this.closeCreationModal();
+                this.justificatifBase64 = null;
+                this.navCtrl.navigateBack('/dashboard', { animated: true });
+              }
+            }
           ]
         });
         await alert.present();
@@ -334,7 +499,7 @@ export class DemandeCongePage implements OnInit {
 
   // ── Vérification délai ────────────────────────────────────────────────────
   verifierDelaiDepot(): { valide: boolean; message: string } {
-    const nb = this.calculerJours();
+    const nb = this.nbJours;
     const dateDebut = new Date(this.congeForm.get('date_debut')?.value);
     const aujourd_hui = new Date(); aujourd_hui.setHours(0, 0, 0, 0); dateDebut.setHours(0, 0, 0, 0);
     const joursAvance = Math.round((dateDebut.getTime() - aujourd_hui.getTime()) / 86400000);
@@ -349,7 +514,7 @@ export class DemandeCongePage implements OnInit {
     if (joursAvance < delaiRequis) {
       return {
         valide: false,
-        message: `Pour un congé de ${nb} jour(s), la demande doit être soumise ${libelle}.\n\nVous êtes à ${joursAvance} jour(s) du début — il manque ${delaiRequis - joursAvance} jour(s).`
+        message: `Pour un congé de ${nb} jour(s), la demande doit être soumise ${libelle}.`
       };
     }
     return { valide: true, message: '' };
@@ -380,5 +545,16 @@ export class DemandeCongePage implements OnInit {
     this.modalCreationVisible = false;
     this.selectedEmploye = null;
     this.fileName = '';
+  }
+
+  get today(): string {
+    return this.toLocalDateString(new Date());
+  }
+
+  get minDateFin(): string {
+    const debut = this.congeForm?.get('date_debut')?.value;
+    if (!debut) return this.today;
+    const debutStr = this.toLocalDateString(new Date(debut));
+    return debutStr > this.today ? debutStr : this.today;
   }
 }

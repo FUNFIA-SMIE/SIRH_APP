@@ -58,16 +58,18 @@
         </div>
         <div class="dates-row">
 
-          <div class="date-block" id="open-debut">
-            <span class="date-block-label">DÉBUT</span>
+          <div class="date-block" id="open-debut" [class.disabled]="!typeSelectionne" [attr.aria-disabled]="!typeSelectionne">
+            <span class="date-block-label">DATE DE DÉBUT</span>
             <div class="date-btn">
               <ion-icon name="calendar-outline"></ion-icon>
               <span>{{ dateDebutAffiche }}</span>
             </div>
-            <ion-checkbox formControlName="demi_journee_debut"
-              (ionChange)="calculerJours()" class="half-day-check">
+            <ion-checkbox formControlName="demi_journee_debut" class="half-day-check">
               Après-midi
             </ion-checkbox>
+            <ion-note color="danger" *ngIf="dateDebutError" class="date-error">
+              {{ dateDebutError }}
+            </ion-note>
           </div>
 
           <div class="dates-separator">
@@ -76,19 +78,24 @@
             <div class="separator-line"></div>
           </div>
 
-          <div class="date-block" id="open-fin">
-            <span class="date-block-label">FIN</span>
+          <div class="date-block" id="open-fin" [class.disabled]="!typeSelectionne" [attr.aria-disabled]="!typeSelectionne">
+            <span class="date-block-label">DATE DE RETOUR</span>
             <div class="date-btn">
               <ion-icon name="calendar-outline"></ion-icon>
               <span>{{ dateFinAffiche }}</span>
             </div>
-            <ion-checkbox formControlName="demi_journee_fin"
-              (ionChange)="calculerJours()" class="half-day-check">
+            <ion-checkbox formControlName="demi_journee_fin" class="half-day-check">
               Matin
             </ion-checkbox>
+            <ion-note color="danger" *ngIf="dateFinError" class="date-error">
+              {{ dateFinError }}
+            </ion-note>
           </div>
 
         </div>
+        <ion-note color="medium" *ngIf="!typeSelectionne" class="date-help">
+          Veuillez choisir le type de congé avant de sélectionner les dates.
+        </ion-note>
       </div>
 
       <!-- MOTIF -->
@@ -116,22 +123,16 @@
       <!-- FOOTER -->
       <div class="form-footer">
         <div class="days-counter">
-          <span class="days-num">{{ calculerJours() }}</span>
+          <span class="days-num">{{ nbJours }}</span>
           <span class="days-label">jours</span>
         </div>
-          <div style="display:flex;gap:8px;width:100%">
-            <!--
-            <ion-button expand="block" type="button" (click)="previewPdf()" class="outline-btn">
-              <ion-icon name="documentAttachOutline" slot="start"></ion-icon>
-              Prévisualiser
-            </ion-button>d, il
-          -->
-            <ion-button expand="block" type="submit"
-              [disabled]="!congeForm.valid" class="submit-btn">
-              <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
-              Soumettre à la RH
-            </ion-button>
-          </div>
+        <div style="display:flex;gap:8px;width:100%">
+          <ion-button expand="block" type="submit"
+            [disabled]="!congeForm.valid || dateDebutInvalide || dateFinInvalide" class="submit-btn">
+            <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+            Soumettre à la RH
+          </ion-button>
+        </div>
       </div>
 
     </form>
@@ -142,19 +143,21 @@
     <ng-template>
       <div [formGroup]="congeForm">
         <ion-datetime formControlName="date_debut" presentation="date"
-          [min]="today" locale="fr-FR" (ionChange)="calculerJours()"
+          [min]="today" locale="fr-FR"
+          (ionChange)="onDateChange('debut', $event)"
           showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
         </ion-datetime>
       </div>
     </ng-template>
   </ion-modal>
 
-  <!-- MODAL FIN -->
+  <!-- MODAL FIN (min dynamique = date de début, jamais avant) -->
   <ion-modal trigger="open-fin" [keepContentsMounted]="true">
     <ng-template>
       <div [formGroup]="congeForm">
         <ion-datetime formControlName="date_fin" presentation="date"
-          [min]="today" locale="fr-FR" (ionChange)="calculerJours()"
+          [min]="minDateFin" locale="fr-FR"
+          (ionChange)="onDateChange('fin', $event)"
           showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
         </ion-datetime>
       </div>
