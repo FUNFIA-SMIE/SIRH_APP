@@ -276,6 +276,17 @@ export class DemandeCongePage implements OnInit {
       || intitulePoste === 'Agent de surface'
   }
 
+  /**
+   * Vérifie si l'après-midi d'aujourd'hui est encore disponible.
+   * Considère que l'après-midi commence à 12h.
+   */
+  private isApresmidiDisponible(): boolean {
+    const now = new Date();
+    const heure = now.getHours();
+    // L'après-midi commence à 12h00, donc elle n'est disponible que avant cette heure
+    return heure < 12;
+  }
+
   private validerDateDebut(): void {
     const ctrl = this.congeForm.get('date_debut');
     const val = ctrl?.value;
@@ -293,6 +304,23 @@ export class DemandeCongePage implements OnInit {
       this.dateDebutInvalide = true;
       ctrl?.setErrors({ jourInterdit: true });
       return;
+    }
+
+    // Vérifier que l'après-midi n'est pas déjà passée si demi-journée cochée et date = aujourd'hui
+    const demiJourneeDebut = this.congeForm.get('demi_journee_debut')?.value;
+    if (demiJourneeDebut) {
+      const dateDebut = new Date(val);
+      const aujourd = new Date();
+      aujourd.setHours(0, 0, 0, 0);
+      dateDebut.setHours(0, 0, 0, 0);
+
+      // Si c'est aujourd'hui et demi-journée cochée
+      if (dateDebut.getTime() === aujourd.getTime() && !this.isApresmidiDisponible()) {
+        this.dateDebutError = 'Après-midi non disponible. Veuillez choisir une autre date ou décocher cette option.';
+        this.dateDebutInvalide = true;
+        ctrl?.setErrors({ apresmidiPassee: true });
+        return;
+      }
     }
 
     this.dateDebutError = '';
