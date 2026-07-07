@@ -458,18 +458,24 @@ export class DemandeCongePage implements OnInit {
       return;
     }
 
-    const check = this.verifierDelaiDepot();
-    if (!check.valide) {
-      const alert = await this.alertCtrl.create({
-        header: '⚠️ Délai de dépôt non respecté',
-        message: check.message,
-        buttons: [
-          { text: 'Modifier les dates', role: 'cancel', cssClass: 'alert-btn-cancel' },
-        ]
-      });
-      await alert.present();
-      return;
+    // Le contrôle du délai de dépôt ne s'applique que aux congés payés
+    const typeKey = mapTypeConge(typeObj?.libelle ?? '');
+    if (typeKey === 'conge_paye') {
+      const check = this.verifierDelaiDepot();
+      if (!check.valide) {
+        const alert = await this.alertCtrl.create({
+          header: '⚠️ Délai de dépôt non respecté',
+          message: check.message,
+          buttons: [
+            { text: 'Modifier les dates', role: 'cancel', cssClass: 'alert-btn-cancel' },
+          ]
+        });
+        await alert.present();
+        return;
+      }
     }
+
+    // Pour les autres types (ex: maladie, permission...), on envoie directement
     this.envoyerDemande();
   }
 
