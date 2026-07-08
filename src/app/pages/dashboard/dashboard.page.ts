@@ -116,6 +116,10 @@ export class DashboardPage implements OnInit {
       this.solde_conges = this.solde_conges.filter(
         (p: any) => p.employe_id === this.token.employe_id
       );
+
+
+      console.log('Solde conges:', this.solde_conges);
+      console.log(this.solde_conges?.[0]?.soldes?.[0]?.solde_restant);
     } catch (err) {
       console.error('Erreur chargerDonnees:', err);
       this.historiques = [];

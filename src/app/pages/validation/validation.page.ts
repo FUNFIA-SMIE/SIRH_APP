@@ -272,7 +272,10 @@ export class ValidationPage implements OnInit {
       console.log(this.token.poste_id);
     }
 
-    console.log('Approbation demandée pour', d.departement_id);
+    console.log('Approbation demandée pour', d);
+
+
+    
 
     const departement = await this.service.getDepartmentById(d.departement_id).toPromise() as any;
     const poste = await this.service.getPosteById(this.token.poste_id).toPromise() as any;
@@ -280,7 +283,8 @@ export class ValidationPage implements OnInit {
     console.log('Poste pour la demande', poste);
 
 
-    if (departement.code === 'PARAMED' || departement.code === 'MED') {
+
+    if (departement.code === 'PARAMED' || departement.code === 'MED' || departement.code === 'DENT') {
 
       if (d.statut === 'en_attente_manager') {
         // Bloquer si l'utilisateur n'est pas le responsable du département
@@ -315,6 +319,7 @@ export class ValidationPage implements OnInit {
 
     // Département hors MED/PARAMED → approbation directe
     this.approuver_demande(d, 'approuve');
+  
   }
 
   approuver_demande(d: any, etat: string): void {
