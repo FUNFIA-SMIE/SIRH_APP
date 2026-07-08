@@ -35,6 +35,28 @@ function mapTypeConge(
   return 'autre';
 }
 
+/**
+ * Génère un UUID v4. Utilise crypto.randomUUID() si disponible
+ * (nécessite un contexte sécurisé : HTTPS ou localhost), sinon
+ * retombe sur une génération manuelle — indispensable en prod
+ * quand l'app est servie en HTTP simple sur une IP (ex: 192.168.x.x).
+ */
+function generateUuid(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // ignore et bascule sur le fallback ci-dessous
+    }
+  }
+  // Fallback RFC4122 v4 sans dépendance externe
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 @Component({
   selector: 'app-demande-conge',
   templateUrl: './demande-conge.page.html',
@@ -267,10 +289,10 @@ export class DemandeCongePage implements OnInit {
     const intitulePoste = this.poste?.intitule;
 
     return codeDept === 'PARAMED' || codeDept === 'MED'
-      || intitulePoste === 'MEDECIN CHEF' 
-      || intitulePoste === 'MAJOR' 
-      || intitulePoste === 'MEDECIN' 
-      || intitulePoste === 'Assistante Dentaire' 
+      || intitulePoste === 'MEDECIN CHEF'
+      || intitulePoste === 'MAJOR'
+      || intitulePoste === 'MEDECIN'
+      || intitulePoste === 'Assistante Dentaire'
       || intitulePoste === "Agent d'Accueil"
       || intitulePoste === 'PARAMED'
       || intitulePoste === 'Agent de surface'
@@ -489,7 +511,7 @@ export class DemandeCongePage implements OnInit {
     }
     const v = this.congeForm.value;
     const payload = {
-      id: crypto.randomUUID(),
+      id: generateUuid(),
       employe_id: this.token?.employe_id,
       type_conge_id: v.type_conge_id,
       date_debut: v.date_debut,
