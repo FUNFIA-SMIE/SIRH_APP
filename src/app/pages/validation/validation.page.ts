@@ -154,7 +154,7 @@ export class ValidationPage implements OnInit {
       console.log('Département pour la demande', departement);
       console.log('Poste pour la demande', poste);
 
-      if (departement.code === 'PARAMED' || departement.code === 'MED') {
+      if (departement.code === 'PARAMED' || departement.code === 'MED' || departement.code === 'DENT') {
 
         if (this.demandeEnCours.statut === 'en_attente_manager') {
           // Bloquer si l'utilisateur n'est pas le responsable du département
@@ -164,7 +164,9 @@ export class ValidationPage implements OnInit {
           }
           // Bloquer si c'est le Directeur Exécutif (ne gère pas cette étape)
           if (poste.intitule === 'Directeur Exécutif') {
-            alert("La demande n'est pas encore approuvée par son manager.");
+            const proceed = await this.timedConfirm("Vous êtes Directeur Exécutif. Confirmer le refus ?", 10);
+            if (!proceed) return;
+            this.refuser_demande();
             return;
           }
           // ✅ Passe à l'étape suivante
@@ -212,6 +214,84 @@ export class ValidationPage implements OnInit {
   showToast(message: string, type: 'success' | 'error') {
     this.notification = { message, type };
     setTimeout(() => this.notification = null, 3000);
+  }
+
+  // Affiche une boite de confirmation custom où le bouton OK est désactivé pendant `seconds`
+  async timedConfirm(message: string, seconds = 10): Promise<boolean> {
+    return new Promise(resolve => {
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.left = '0';
+      overlay.style.top = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.background = 'rgba(0,0,0,0.4)';
+      overlay.style.zIndex = '9999';
+
+      const box = document.createElement('div');
+      box.style.background = 'white';
+      box.style.padding = '16px';
+      box.style.borderRadius = '8px';
+      box.style.maxWidth = '90%';
+      box.style.boxShadow = '0 2px 12px rgba(0,0,0,0.2)';
+      box.style.textAlign = 'center';
+
+      const msg = document.createElement('div');
+      msg.style.marginBottom = '12px';
+      msg.textContent = message;
+
+      const counter = document.createElement('div');
+      counter.style.marginBottom = '12px';
+      counter.style.fontWeight = '600';
+      counter.textContent = `Veuillez patienter ${seconds} s...`;
+
+      const btns = document.createElement('div');
+      btns.style.display = 'flex';
+      btns.style.justifyContent = 'center';
+      btns.style.gap = '8px';
+
+      const btnCancel = document.createElement('button');
+      btnCancel.textContent = 'Annuler';
+      btnCancel.style.padding = '8px 12px';
+
+      const btnOk = document.createElement('button');
+      btnOk.textContent = 'OK';
+      btnOk.disabled = true;
+      btnOk.style.padding = '8px 12px';
+
+      btns.appendChild(btnCancel);
+      btns.appendChild(btnOk);
+
+      box.appendChild(msg);
+      box.appendChild(counter);
+      box.appendChild(btns);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      let remaining = seconds;
+      const interval = setInterval(() => {
+        remaining -= 1;
+        if (remaining > 0) {
+          counter.textContent = `Veuillez patienter ${remaining} s...`;
+        } else {
+          clearInterval(interval);
+          counter.textContent = '';
+          btnOk.disabled = false;
+        }
+      }, 1000);
+
+      const cleanup = (result: boolean) => {
+        clearInterval(interval);
+        try { document.body.removeChild(overlay); } catch (e) { }
+        resolve(result);
+      };
+
+      btnCancel.addEventListener('click', () => cleanup(false));
+      btnOk.addEventListener('click', () => cleanup(true));
+    });
   }
 
   isLoading = false; // ← ajouter avec les autres propriétés
@@ -265,6 +345,7 @@ export class ValidationPage implements OnInit {
     }
   */
   // ── Actions liste ─────────────────────────────────────────
+  /*
   async approuver(d: any): Promise<void> {
     const currentUser = this.session.getUser();
     if (currentUser) {
@@ -281,6 +362,7 @@ export class ValidationPage implements OnInit {
     const poste = await this.service.getPosteById(this.token.poste_id).toPromise() as any;
     console.log('Département pour la demande', departement);
     console.log('Poste pour la demande', poste);
+    
 
 
 
@@ -294,12 +376,11 @@ export class ValidationPage implements OnInit {
         }
         // Bloquer si c'est le Directeur Exécutif (ne gère pas cette étape)
         if (poste.intitule === 'Directeur Exécutif') {
-          alert("La demande n'est pas encore approuvée par son manager.");
-          return;
+          const proceed = await this.timedConfirm("Vous êtes Directeur Exécutif. Confirmer l'approbation ?", 10);
+          if (!proceed) return;
+          this.approuver_demande(d, 'en_attente_rh');
+          return; // 🔴 IMPORTANT : évite de tomber dans le this.approuver_demande final
         }
-        // ✅ Passe à l'étape suivante
-        this.approuver_demande(d, 'en_attente_rh');
-        return; // 🔴 IMPORTANT : évite de tomber dans le this.approuver_demande final
       }
 
       if (d.statut === 'en_attente_rh') {
@@ -320,8 +401,67 @@ export class ValidationPage implements OnInit {
     // Département hors MED/PARAMED → approbation directe
     this.approuver_demande(d, 'approuve');
   
-  }
+  }*/
 
+  async approuver(d: any): Promise<void> {
+    const currentUser = this.session.getUser();
+    if (!currentUser) {
+      alert("Session expirée, veuillez vous reconnecter.");
+      return;
+    }
+    this.token = currentUser;
+
+    const departement = await this.service.getDepartmentById(d.departement_id).toPromise() as any;
+    const poste = await this.service.getPosteById(this.token.poste_id).toPromise() as any;
+
+    const codeDept = (departement.code || '').trim().toUpperCase();
+
+    if (codeDept === 'PARAMED' || codeDept === 'MED' || codeDept === 'DENT') {
+
+      console.log(d.statut)
+
+
+      if (d.statut === 'en_attente_manager') {
+
+        console.log(d.statut)
+        if (poste.intitule === 'Directeur Exécutif') {
+          const proceed = await this.timedConfirm("Vous êtes Directeur Exécutif. Confirmer l'approbation ?", 10);
+          if (!proceed) return;
+          this.approuver_demande(d, 'en_attente_rh');
+          return;
+        }
+
+        console.log(departement)
+        console.log(this.token)
+        console.log('Responsable du département:', departement.responsable_id, 'Utilisateur actuel:', this.token.employe_id);
+
+        if (departement.responsable_id !== this.token.employe_id) {
+          alert("La demande n'est pas encore approuvée par son manager.");
+          return;
+        }
+        else {
+          this.approuver_demande(d, 'en_attente_rh');
+
+        }
+
+        this.approuver_demande(d, 'en_attente_rh');
+        return;
+      }
+
+      if (d.statut === 'en_attente_rh') {
+        if (poste.intitule !== 'Directeur Exécutif') {
+          alert("La demande doit être approuvée par le Directeur Exécutif.");
+          return;
+        }
+        this.approuver_demande(d, 'approuve');
+        return;
+      }
+
+      return;
+    }
+
+    this.approuver_demande(d, 'approuve');
+  }
   approuver_demande(d: any, etat: string): void {
     const data = {
       id: d.id,

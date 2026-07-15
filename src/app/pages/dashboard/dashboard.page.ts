@@ -5,7 +5,7 @@ import { addIcons } from 'ionicons';
 import {
   notificationsOutline, addCircleOutline, calendarOutline,
   documentTextOutline, personOutline, checkmarkCircle, time,
-  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline,gridOutline
+  calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline, refreshOutline, gridOutline
 } from 'ionicons/icons';
 import { ServiceSirh } from 'src/app/services/service-sirh';
 import { SessionService } from 'src/app/services/session.service';
@@ -38,12 +38,26 @@ export class DashboardPage implements OnInit {
     addIcons({
       notificationsOutline, addCircleOutline, calendarOutline,
       documentTextOutline, personOutline, checkmarkCircle, time,
-      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline,gridOutline
+      calendarNumberOutline, logOutOutline, shieldCheckmarkOutline, closeCircle, calculatorOutline, refreshOutline, gridOutline
     });
   }
 
+  isRefreshing: boolean = false;
+
   get soldeAffiche(): number {
     return Math.max(0, this.solde_conges?.[0]?.soldes?.[0]?.solde_restant ?? 0);
+  }
+
+  async onRefresh() {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
+    try {
+      await this.chargerDonnees();
+    } catch (err) {
+      console.error('Erreur onRefresh:', err);
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   get soldePercent(): number {
@@ -68,7 +82,7 @@ export class DashboardPage implements OnInit {
         
         if (poste?.intitule === 'Directeur Exécutif') {
           this.status = true;
-        } else if (poste?.intitule === 'MEDECIN CHEF' || poste?.intitule === 'MAJOR') {
+        } else if (poste?.intitule === 'MEDECIN CHEF' || poste?.intitule === 'MAJOR' || poste?.intitule === 'DENTISTE') {
           this.status = true;
         }
       } catch (err) {

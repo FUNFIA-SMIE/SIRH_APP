@@ -557,15 +557,31 @@ export class DemandeCongePage implements OnInit {
   verifierDelaiDepot(): { valide: boolean; message: string } {
     const nb = this.nbJours;
     const dateDebut = new Date(this.congeForm.get('date_debut')?.value);
-    const aujourd_hui = new Date(); aujourd_hui.setHours(0, 0, 0, 0); dateDebut.setHours(0, 0, 0, 0);
+    const aujourd_hui = new Date();
+    aujourd_hui.setHours(0, 0, 0, 0);
+    dateDebut.setHours(0, 0, 0, 0);
     const joursAvance = Math.round((dateDebut.getTime() - aujourd_hui.getTime()) / 86400000);
 
     let delaiRequis = 0, libelle = '';
-    if (nb <= 1) { delaiRequis = 0; libelle = 'la veille ou le jour même'; }
-    else if (nb <= 3) { delaiRequis = 7; libelle = '7 jours à l\'avance'; }
-    else if (nb <= 7) { delaiRequis = 10; libelle = '10 jours à l\'avance'; }
-    else if (nb <= 15) { delaiRequis = 21; libelle = '21 jours à l\'avance'; }
-    else { delaiRequis = 30; libelle = '30 jours à l\'avance'; }
+
+    if (nb <= 1) {
+      delaiRequis = 0; libelle = 'la veille ou le jour même';
+    } else if (nb === 2) {
+      delaiRequis = 3; libelle = '3 jours à l\'avance';
+    } else if (nb === 3) {
+      delaiRequis = 4; libelle = '4 jours à l\'avance';
+    } else if (nb === 4) {
+      delaiRequis = 5; libelle = '5 jours à l\'avance';
+    } else if (nb <= 7) {
+      // De 5 jours à 1 semaine
+      delaiRequis = 7; libelle = '7 jours à l\'avance';
+    } else if (nb <= 15) {
+      // De 8 à 15 jours
+      delaiRequis = 10; libelle = '10 jours à l\'avance';
+    } else {
+      // Plus de 15 jours
+      delaiRequis = 15; libelle = '15 jours à l\'avance';
+    }
 
     if (joursAvance < delaiRequis) {
       return {
@@ -573,6 +589,7 @@ export class DemandeCongePage implements OnInit {
         message: `Pour un congé de ${nb} jour(s), la demande doit être soumise ${libelle}.`
       };
     }
+
     return { valide: true, message: '' };
   }
 
