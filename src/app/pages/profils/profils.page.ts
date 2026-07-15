@@ -82,13 +82,16 @@ export class ProfilsPage implements OnInit {
 
     this.poste = await this.srvc.getAllEmployees().toPromise();
 
-    this.poste = this.poste.filter((data: any) => data.employe_id === this.token.employe_id);
+    console.log("poste", this.poste)
+    console.log("employe_id", this.token.employe_id)
+
+    this.poste = this.poste.filter((data: any) => data.id === this.token.employe_id);
     console.log("poste", this.poste)
     this.employe = {
       nom: 'Rakoto',
       prenom: 'Jean',
       matricule: 'FUN-2024-001',
-      nom_usage: this.poste[0].prenom_employe,
+      nom_usage: this.poste[0].nom_usage,
       email_perso: this.poste[0].email_perso,
       telephone_perso: this.poste[0].telephone_perso,
       adresse: this.poste[0].adresse,

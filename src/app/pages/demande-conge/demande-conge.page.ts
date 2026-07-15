@@ -504,11 +504,6 @@ export class DemandeCongePage implements OnInit {
   private async envoyerDemande(): Promise<void> {
     this.isGeneratingPdf = true;
 
-    try {
-      await this.pdf.generatePdf(this.buildFormData());
-    } finally {
-      this.isGeneratingPdf = false;
-    }
     const v = this.congeForm.value;
     const payload = {
       id: generateUuid(),
@@ -525,6 +520,12 @@ export class DemandeCongePage implements OnInit {
 
     this.serviceSirh.creerConge(payload).subscribe({
       next: async () => {
+        try {
+          await this.pdf.generatePdf(this.buildFormData());
+        } finally {
+          this.isGeneratingPdf = false;
+        }
+
         const alert = await this.alertCtrl.create({
           header: '✅ Succès',
           message: 'Votre demande de congé a été envoyée avec succès !',
