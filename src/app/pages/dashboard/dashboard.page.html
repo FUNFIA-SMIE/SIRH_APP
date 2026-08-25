@@ -38,20 +38,40 @@
   <div class="content-inner">
 
     <!-- SOLDE CARD -->
+    <!-- SOLDE CARD -->
     <div class="balance-card">
-      <div class="balance-left">
-        <p class="balance-label">Solde congés payés</p>
-        <h2 class="balance-value">
-          {{ solde_conges?.[0]?.soldes?.[0]?.solde_restant }}
-          <small>jours</small>
-        </h2>
-        <div class="progress-track">
-          <div class="progress-fill" [style.width.%]="soldePercent"></div>
+
+      <!-- État chargement -->
+      <ng-container *ngIf="isSoldeLoading">
+        <div class="balance-left">
+          <p class="balance-label">Solde congés payés</p>
+          <div class="balance-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+            <span>Chargement...</span>
+          </div>
         </div>
-      </div>
-      <div class="balance-icon">
-        <ion-icon name="calendar-number-outline"></ion-icon>
-      </div>
+        <div class="balance-icon">
+          <ion-icon name="calendar-number-outline"></ion-icon>
+        </div>
+      </ng-container>
+
+      <!-- État chargé -->
+      <ng-container *ngIf="!isSoldeLoading">
+        <div class="balance-left">
+          <p class="balance-label">Solde congés payés</p>
+          <h2 class="balance-value">
+            {{ solde_conges?.[0]?.soldes?.[0]?.solde_restant }}
+            <small>jours</small>
+          </h2>
+          <div class="progress-track">
+            <div class="progress-fill" [style.width.%]="soldePercent"></div>
+          </div>
+        </div>
+        <div class="balance-icon">
+          <ion-icon name="calendar-number-outline"></ion-icon>
+        </div>
+      </ng-container>
+
     </div>
 
     <!-- ACTIONS RAPIDES -->
@@ -201,5 +221,24 @@
       </div>
     </ng-template>
   </ion-popover>
+
+  <!-- ÉCRAN DE CHARGEMENT INITIAL -->
+  <div class="loading-screen" *ngIf="isLoading">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Chargement de vos données...</p>
+  </div>
+
+  <!-- ÉTAT D'ERREUR -->
+  <div class="loading-screen" *ngIf="!isLoading && hasError">
+    <ion-icon name="close-circle" color="danger"></ion-icon>
+    <p>Impossible de charger vos données.</p>
+    <ion-button size="small" fill="outline" (click)="chargerDonnees()">Réessayer</ion-button>
+  </div>
+
+  <!-- CONTENU NORMAL -->
+  <div class="content-inner" *ngIf="!isLoading && !hasError">
+    <!-- ... tout votre contenu existant (balance-card, actions-grid, activity-list, etc.) ... -->
+  </div>
+
 
 </ion-content>

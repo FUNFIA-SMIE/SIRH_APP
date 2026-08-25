@@ -37,8 +37,8 @@
           Type de congé
         </div>
         <ion-item lines="none" class="select-item">
-          <ion-select formControlName="type_conge_id" (ionChange)="onTypeChange()"
-            placeholder="Choisir le type" interface="action-sheet" class="full-width">
+          <ion-select formControlName="type_conge_id" (ionChange)="onTypeChange()" placeholder="Choisir le type"
+            interface="action-sheet" class="full-width">
             <ion-select-option *ngFor="let t of typesConge" [value]="t.id">
               {{ t.libelle }}
             </ion-select-option>
@@ -58,7 +58,8 @@
         </div>
         <div class="dates-row">
 
-          <div class="date-block" id="open-debut" [class.disabled]="!typeSelectionne" [attr.aria-disabled]="!typeSelectionne">
+          <div class="date-block" id="open-debut" [class.disabled]="!typeSelectionne"
+            [attr.aria-disabled]="!typeSelectionne">
             <span class="date-block-label">DATE DE DÉBUT</span>
             <div class="date-btn">
               <ion-icon name="calendar-outline"></ion-icon>
@@ -78,7 +79,8 @@
             <div class="separator-line"></div>
           </div>
 
-          <div class="date-block" id="open-fin" [class.disabled]="!typeSelectionne" [attr.aria-disabled]="!typeSelectionne">
+          <div class="date-block" id="open-fin" [class.disabled]="!typeSelectionne"
+            [attr.aria-disabled]="!typeSelectionne">
             <span class="date-block-label">DATE DE RETOUR</span>
             <div class="date-btn">
               <ion-icon name="calendar-outline"></ion-icon>
@@ -104,8 +106,7 @@
           <span class="label-dot amber"></span>
           Motif <span class="optional-tag">optionnel</span>
         </div>
-        <ion-textarea formControlName="motif" rows="3"
-          placeholder="Précisez la raison de votre demande..."
+        <ion-textarea formControlName="motif" rows="3" placeholder="Précisez la raison de votre demande..."
           class="motif-textarea">
         </ion-textarea>
       </div>
@@ -128,9 +129,18 @@
         </div>
         <div style="display:flex;gap:8px;width:100%">
           <ion-button expand="block" type="submit"
-            [disabled]="!congeForm.valid || dateDebutInvalide || dateFinInvalide" class="submit-btn">
-            <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
-            Soumettre à la RH
+            [disabled]="!congeForm.valid || dateDebutInvalide || dateFinInvalide || isSubmitting" class="submit-btn">
+
+            <ng-container *ngIf="!isSubmitting">
+              <ion-icon name="paper-plane-outline" slot="start"></ion-icon>
+              Soumettre à la RH
+            </ng-container>
+
+            <ng-container *ngIf="isSubmitting">
+              <ion-spinner name="crescent" slot="start"></ion-spinner>
+              Enregistrement en cours...
+            </ng-container>
+
           </ion-button>
         </div>
       </div>
@@ -142,10 +152,9 @@
   <ion-modal trigger="open-debut" [keepContentsMounted]="true">
     <ng-template>
       <div [formGroup]="congeForm">
-        <ion-datetime formControlName="date_debut" presentation="date"
-          [min]="today" locale="fr-FR"
-          (ionChange)="onDateChange('debut', $event)"
-          showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
+        <ion-datetime formControlName="date_debut" presentation="date" [min]="today" locale="fr-FR"
+          (ionChange)="onDateChange('debut', $event)" showDefaultButtons="true" doneText="Confirmer"
+          cancelText="Annuler">
         </ion-datetime>
       </div>
     </ng-template>
@@ -155,10 +164,8 @@
   <ion-modal trigger="open-fin" [keepContentsMounted]="true">
     <ng-template>
       <div [formGroup]="congeForm">
-        <ion-datetime formControlName="date_fin" presentation="date"
-          [min]="minDateFin" locale="fr-FR"
-          (ionChange)="onDateChange('fin', $event)"
-          showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
+        <ion-datetime formControlName="date_fin" presentation="date" [min]="minDateFin" locale="fr-FR"
+          (ionChange)="onDateChange('fin', $event)" showDefaultButtons="true" doneText="Confirmer" cancelText="Annuler">
         </ion-datetime>
       </div>
     </ng-template>

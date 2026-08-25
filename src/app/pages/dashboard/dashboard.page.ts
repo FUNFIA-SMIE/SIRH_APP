@@ -27,7 +27,10 @@ export class DashboardPage implements OnInit {
   solde_conges: any;
   private pollingSubscription?: Subscription;
   private dernierStatuts: Map<number, string> = new Map();
-  status: boolean=false;
+  status: boolean = false;
+  isLoading: boolean = true;
+  hasError: boolean = false;
+  isSoldeLoading: boolean = true;
 
   constructor(
     private navCtrl: NavController,
@@ -51,6 +54,7 @@ export class DashboardPage implements OnInit {
   async onRefresh() {
     if (this.isRefreshing) return;
     this.isRefreshing = true;
+    this.isSoldeLoading = true; // ← ré-affiche le chargement du solde lors du refresh
     try {
       await this.chargerDonnees();
     } catch (err) {
@@ -68,18 +72,18 @@ export class DashboardPage implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       const currentUser = this.session.getUser();
-      
+
       if (!currentUser) {
         this.navCtrl.navigateRoot('/login', { animationDirection: 'back' });
         return;
       }
 
       this.token = currentUser;
-      
+
       let poste: any = null;
       try {
         poste = await this.srvc.getPosteById(this.token.poste_id).toPromise() as any;
-        
+
         if (poste?.intitule === 'Directeur Exécutif') {
           this.status = true;
         } else if (poste?.intitule === 'MEDECIN CHEF' || poste?.intitule === 'MAJOR' || poste?.intitule === 'DENTISTE') {
@@ -90,15 +94,10 @@ export class DashboardPage implements OnInit {
         poste = null;
       }
 
-      console.log("this.data", this.token)
-
-      // ✅ init() AVANT tout le reste
       await this.notifService.init();
-      await this.chargerDonnees();
+      await this.chargerDonnees(); // isLoading est géré à l'intérieur
 
       const is_manager = poste && ['MEDECIN CHEF', 'MAJOR', 'Directeur Exécutif'].includes(poste.intitule);
-
-      // ✅ connectSocket seulement après que init() soit terminé
       this.notifService.connectSocket(this.token.employe_id, is_manager);
     } catch (err) {
       console.error('Erreur ngOnInit dashboard:', err);
@@ -106,6 +105,8 @@ export class DashboardPage implements OnInit {
       this.navCtrl.navigateRoot('/login', { animationDirection: 'back' });
     }
   }
+
+
   ngOnDestroy() {
     this.notifService.disconnectSocket();
   }
@@ -126,20 +127,21 @@ export class DashboardPage implements OnInit {
         this.token = currentUser;
         this.historiques = await this.srvc.getHistorique(this.token.employe_id).toPromise();
       }
+
       this.solde_conges = await this.srvc.solde_conges_employe().toPromise();
       this.solde_conges = this.solde_conges.filter(
         (p: any) => p.employe_id === this.token.employe_id
       );
 
-
-      console.log('Solde conges:', this.solde_conges);
-      console.log(this.solde_conges?.[0]?.soldes?.[0]?.solde_restant);
     } catch (err) {
       console.error('Erreur chargerDonnees:', err);
       this.historiques = [];
       this.solde_conges = [];
+    } finally {
+      this.isSoldeLoading = false; // ← se déclenche même en cas d'erreur
     }
   }
+
 
   // ─── POLLING TOUTES LES 30 SECONDES ─────────────────────────
   startPolling() {
@@ -183,8 +185,8 @@ export class DashboardPage implements OnInit {
   navAbsences() { this.navCtrl.navigateForward('/mes-absences'); }
   navProfil() { this.navCtrl.navigateForward('/profils'); }
   navValidation() { this.navCtrl.navigateForward('/validation'); }
-  NavSCAN(){this.navCtrl.navigateForward('/scan-code-qr');}
-  NavSCAN_QR(){this.navCtrl.navigateForward('/scanner');}
+  NavSCAN() { this.navCtrl.navigateForward('/scan-code-qr'); }
+  NavSCAN_QR() { this.navCtrl.navigateForward('/scanner'); }
 
   logout() {
     this.session.clearSession();

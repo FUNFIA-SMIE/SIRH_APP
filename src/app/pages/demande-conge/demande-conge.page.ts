@@ -74,14 +74,14 @@ export class DemandeCongePage implements OnInit {
 
   dateDebutAffiche = this.formatDate(new Date());
   dateFinAffiche = this.formatDate(new Date());
-
+  isGeneratingPdf = false;
   congeForm!: FormGroup;
   currentUser: any = null;
   typesConge: any[] = [];
   justificatifBase64: string | null = null;
   solde_restant = 0;
   token: any;
-
+  isSubmitting = false;
   // PDF preview
   pdfPreviewUrlSafe: SafeResourceUrl | null = null;
   pdfModalOpen = false;
@@ -433,7 +433,6 @@ export class DemandeCongePage implements OnInit {
     };
   }
 
-  isGeneratingPdf = false;
 
   // ── Aperçu PDF ────────────────────────────────────────────────────────────
   async previewPdf() {
@@ -451,10 +450,13 @@ export class DemandeCongePage implements OnInit {
 
   // ── Soumission avec vérification du délai ────────────────────────────────
   async soumettreDemande(): Promise<void> {
-    if (this.congeForm.invalid) return;
+    if (this.congeForm.invalid || this.isSubmitting) return; // anti double-clic
 
-    this.recalculer(); // revalide au cas où
+    this.isSubmitting = true; // ← verrouille le bouton immédiatement
+
+    this.recalculer();
     if (this.dateDebutInvalide || this.dateFinInvalide) {
+      this.isSubmitting = false; // ← on déverrouille si ça bloque avant l'envoi réel
       const alert = await this.alertCtrl.create({
         header: '📅 Dates invalides',
         message: this.dateDebutError || this.dateFinError,
@@ -464,46 +466,41 @@ export class DemandeCongePage implements OnInit {
       return;
     }
 
-    // Si type 'maladie' sélectionné, justificatif obligatoire
     const typeObj = this.getTypeSelectionne();
     const libelle = (typeObj?.libelle || '').toLowerCase();
     const estMaladie = libelle.includes('malad') || libelle.includes('maladie') || libelle.includes('sick');
     if (estMaladie && !this.justificatifBase64) {
+      this.isSubmitting = false;
       const alert = await this.alertCtrl.create({
         header: '📎 Justificatif requis',
         message: 'Pour un congé de maladie, un justificatif médical est obligatoire. Veuillez joindre un fichier.',
-        buttons: [
-          { text: 'OK', role: 'cancel', cssClass: 'alert-btn-cancel' }
-        ]
+        buttons: [{ text: 'OK', role: 'cancel', cssClass: 'alert-btn-cancel' }]
       });
       await alert.present();
       return;
     }
 
-    // Le contrôle du délai de dépôt ne s'applique que aux congés payés
     const typeKey = mapTypeConge(typeObj?.libelle ?? '');
     if (typeKey === 'conge_paye') {
       const check = this.verifierDelaiDepot();
       if (!check.valide) {
+        this.isSubmitting = false;
         const alert = await this.alertCtrl.create({
           header: '⚠️ Délai de dépôt non respecté',
           message: check.message,
-          buttons: [
-            { text: 'Modifier les dates', role: 'cancel', cssClass: 'alert-btn-cancel' },
-          ]
+          buttons: [{ text: 'Modifier les dates', role: 'cancel', cssClass: 'alert-btn-cancel' }]
         });
         await alert.present();
         return;
       }
     }
 
-    // Pour les autres types (ex: maladie, permission...), on envoie directement
+    // À partir d'ici l'envoi réel démarre : isSubmitting reste true,
+    // c'est envoyerDemande() qui le repassera à false.
     this.envoyerDemande();
   }
 
   private async envoyerDemande(): Promise<void> {
-    this.isGeneratingPdf = true;
-
     const v = this.congeForm.value;
     const payload = {
       id: generateUuid(),
@@ -523,31 +520,28 @@ export class DemandeCongePage implements OnInit {
         try {
           await this.pdf.generatePdf(this.buildFormData());
         } finally {
-          this.isGeneratingPdf = false;
+          this.isSubmitting = false; // ← libéré seulement une fois tout terminé (DB + PDF)
         }
 
         const alert = await this.alertCtrl.create({
           header: '✅ Succès',
           message: 'Votre demande de congé a été envoyée avec succès !',
-          buttons: [
-            {
-              text: 'OK', handler: () => {
-                this.closeCreationModal();
-                this.justificatifBase64 = null;
-                this.navCtrl.navigateBack('/dashboard', { animated: true });
-              }
+          buttons: [{
+            text: 'OK', handler: () => {
+              this.closeCreationModal();
+              this.justificatifBase64 = null;
+              this.navCtrl.navigateBack('/dashboard', { animated: true });
             }
-          ]
+          }]
         });
         await alert.present();
       },
       error: async (err) => {
+        this.isSubmitting = false; // ← on redonne la main à l'utilisateur en cas d'échec
         const alert = await this.alertCtrl.create({
           header: '❌ Erreur',
           message: err.error?.error || 'Une erreur est survenue lors de l\'envoi de la demande. Veuillez réessayer.',
-          buttons: [
-            { text: 'OK', role: 'cancel' }
-          ]
+          buttons: [{ text: 'OK', role: 'cancel' }]
         });
         await alert.present();
       }
@@ -561,27 +555,45 @@ export class DemandeCongePage implements OnInit {
     const aujourd_hui = new Date();
     aujourd_hui.setHours(0, 0, 0, 0);
     dateDebut.setHours(0, 0, 0, 0);
+
+    if (isNaN(dateDebut.getTime())) {
+      return { valide: false, message: 'Veuillez renseigner une date de début valide.' };
+    }
+
     const joursAvance = Math.round((dateDebut.getTime() - aujourd_hui.getTime()) / 86400000);
 
-    let delaiRequis = 0, libelle = '';
+    const motif = this.congeForm.get('motif')?.value; // à adapter au nom réel du champ
 
-    if (nb <= 1) {
-      delaiRequis = 0; libelle = 'la veille ou le jour même';
+    let delaiRequis = 0;
+    let libelle = '';
+
+    if (motif === 'mariage') {
+      delaiRequis = 15;
+      libelle = '15 jours à l\'avance';
+    } else if (motif === 'circoncision') {
+      delaiRequis = 7;
+      libelle = '7 jours à l\'avance';
+    } else if (nb <= 1) {
+      delaiRequis = 0;
+      libelle = 'la veille ou le jour même';
     } else if (nb === 2) {
-      delaiRequis = 3; libelle = '3 jours à l\'avance';
+      delaiRequis = 3;
+      libelle = '3 jours à l\'avance';
     } else if (nb === 3) {
-      delaiRequis = 4; libelle = '4 jours à l\'avance';
+      delaiRequis = 4;
+      libelle = '4 jours à l\'avance';
     } else if (nb === 4) {
-      delaiRequis = 5; libelle = '5 jours à l\'avance';
+      delaiRequis = 5;
+      libelle = '5 jours à l\'avance';
     } else if (nb <= 7) {
-      // De 5 jours à 1 semaine
-      delaiRequis = 7; libelle = '7 jours à l\'avance';
+      delaiRequis = 7;
+      libelle = '7 jours à l\'avance';
     } else if (nb <= 15) {
-      // De 8 à 15 jours
-      delaiRequis = 10; libelle = '10 jours à l\'avance';
+      delaiRequis = 10;
+      libelle = '10 jours à l\'avance';
     } else {
-      // Plus de 15 jours
-      delaiRequis = 15; libelle = '15 jours à l\'avance';
+      delaiRequis = 15;
+      libelle = '15 jours à l\'avance';
     }
 
     if (joursAvance < delaiRequis) {
@@ -592,6 +604,17 @@ export class DemandeCongePage implements OnInit {
     }
 
     return { valide: true, message: '' };
+  }
+
+  onSubmit(): void {
+    const resultat = this.verifierDelaiDepot();
+
+    if (!resultat.valide) {
+      alert(resultat.message);
+      return; // bloque l'envoi
+    }
+
+    // ... ici votre code existant d'envoi de la demande
   }
 
   // ── Fichier justificatif ──────────────────────────────────────────────────
