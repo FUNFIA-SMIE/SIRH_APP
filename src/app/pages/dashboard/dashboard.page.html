@@ -222,23 +222,5 @@
     </ng-template>
   </ion-popover>
 
-  <!-- ÉCRAN DE CHARGEMENT INITIAL -->
-  <div class="loading-screen" *ngIf="isLoading">
-    <ion-spinner name="crescent"></ion-spinner>
-    <p>Chargement de vos données...</p>
-  </div>
-
-  <!-- ÉTAT D'ERREUR -->
-  <div class="loading-screen" *ngIf="!isLoading && hasError">
-    <ion-icon name="close-circle" color="danger"></ion-icon>
-    <p>Impossible de charger vos données.</p>
-    <ion-button size="small" fill="outline" (click)="chargerDonnees()">Réessayer</ion-button>
-  </div>
-
-  <!-- CONTENU NORMAL -->
-  <div class="content-inner" *ngIf="!isLoading && !hasError">
-    <!-- ... tout votre contenu existant (balance-card, actions-grid, activity-list, etc.) ... -->
-  </div>
-
 
 </ion-content>
