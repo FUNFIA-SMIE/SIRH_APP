@@ -68,3 +68,5 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+android/keystore.properties
+android/app/sirh-release-key.keystore
